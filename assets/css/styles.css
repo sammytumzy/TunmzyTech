@@ -1,0 +1,95 @@
+/* Moved all CSS styles from index.html to this file */
+html, body {
+  background: linear-gradient(270deg, #7e22ce, #4c1d95, #9333ea, #7e22ce);
+  color: #ffffff; /* Ensure text is bright and readable */
+}
+.group {
+  background: linear-gradient(135deg, rgba(37, 99, 235, 0.9), rgba(124, 58, 237, 0.9));
+  color: #ffffff; /* Bright text for better contrast */
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+.group:hover {
+  transform: scale(1.1);
+  box-shadow: 0 0 20px rgba(124, 58, 237, 0.8), 0 0 10px rgba(37, 99, 235, 0.6);
+}
+.group h4 {
+  color: #ffffff; /* Ensure headings are bright and readable */
+}
+.group p {
+  color: rgba(255, 255, 255, 0.9); /* Light text for better readability */
+}
+
+/* Update icons to match the style in the screenshot */
+.group span {
+  font-size: 2rem; /* Adjust icon size */
+  color: #60a5fa; /* Use a soft blue color for icons */
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 10px;
+}
+.group:hover span {
+  color: #3b82f6; /* Change icon color on hover */
+}
+
+/* Add other styles here */
+
+/* Ensure scaling effect works properly for navigation links */
+nav a {
+  display: inline-block; /* Ensure links are treated as block elements for scaling */
+  transition: transform 0.3s ease, color 0.3s ease;
+  color: #d1d5db; /* Light gray for default link color */
+}
+nav a:hover {
+  transform: scale(1.1);
+  color: #60a5fa; /* Soft blue for hover links */
+}
+h1, h2, h3, h4, h5, h6 {
+  color: #ffffff; /* Bright white for headings */
+}
+p, a, li {
+  color: #d1d5db; /* Light gray for body text */
+}
+
+/* Remove styles for the AI assistant and chat popup */
+#ai-assistant, #chat-popup {
+  display: none;
+}
+
+/* Fix hover effect for the Apply Now button */
+#careers a {
+  display: inline-block; /* Ensure the button is treated as a block element */
+  transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
+}
+#careers a:hover {
+  transform: scale(1.2); /* Make the button visibly bigger on hover */
+  box-shadow: 0 0 30px rgba(255, 255, 255, 0.9), 0 0 20px rgba(124, 58, 237, 0.8);
+}
+
+/* Update the Send Message button color */
+#contact button {
+  background: linear-gradient(90deg, #4c1d95, #9333ea, #2563eb);
+  color: #ffffff; /* Bright white text */
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+#contact button:hover {
+  transform: scale(1.1);
+  box-shadow: 0 0 20px rgba(124, 58, 237, 0.8), 0 0 10px rgba(37, 99, 235, 0.6);
+}
+
+/* Update the Explore Solutions button to match the Send Message button's color */
+#mission a {
+  background: linear-gradient(90deg, #9333ea, #2563eb);
+  color: #ffffff; /* Bright white text */
+  font-weight: bold;
+  text-transform: uppercase;
+  padding: 12px 24px;
+  border-radius: 8px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+#mission a:hover {
+  transform: scale(1.1);
+  box-shadow: 0 0 20px rgba(124, 58, 237, 0.8), 0 0 10px rgba(37, 99, 235, 0.6);
+}
