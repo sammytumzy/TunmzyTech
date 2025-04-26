@@ -93,3 +93,55 @@ p, a, li {
   transform: scale(1.1);
   box-shadow: 0 0 20px rgba(124, 58, 237, 0.8), 0 0 10px rgba(37, 99, 235, 0.6);
 }
+
+/* Improve mobile responsiveness */
+@media (max-width: 768px) {
+  body {
+    padding: 0 10px;
+  }
+
+  .chat-container {
+    margin: 20px auto;
+    padding: 15px;
+  }
+
+  .chat-header {
+    font-size: 1.2rem;
+  }
+
+  .chat-window {
+    height: 250px;
+  }
+
+  .chat-input input {
+    font-size: 0.9rem;
+    padding: 8px;
+  }
+
+  .chat-input button {
+    padding: 8px 15px;
+    font-size: 0.9rem;
+  }
+
+  nav ul {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .group {
+    padding: 10px;
+  }
+
+  .group h4 {
+    font-size: 1rem;
+  }
+
+  .group p {
+    font-size: 0.9rem;
+  }
+
+  .animated-gradient {
+    font-size: 0.9rem;
+    padding: 10px 20px;
+  }
+}
