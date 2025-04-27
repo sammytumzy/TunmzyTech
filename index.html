@@ -9,34 +9,40 @@
   <!-- FontAwesome 6.5.2 -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.5.2/css/all.min.css">
   <!-- Google Fonts (Inter) -->
-  <link href="https://cdn.jsdelivr.net/npm/@fontsource/inter@3.3.1/index.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/@fontsource/inter@4.5.0/index.min.css" rel="stylesheet">
   <!-- Chart.js 4.4.3 for visualization -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
   <link rel="stylesheet" href="assets/css/styles.css">
   <script src="assets/js/scripts.js" defer></script>
-  <link rel="icon" href="assets/pictures/favicon.ico" type="image/x-icon">
+  <link rel="icon" href="assets/pictures/robot.ico" type="image/x-icon">
   <style>
-    /* Change overall background to a dynamic purple gradient */
+    /* Adjust text and background colors for better contrast */
     html, body {
       height: 100%;
       font-family: 'Inter', sans-serif;
-      background: linear-gradient(270deg, #7e22ce, #4c1d95, #9333ea, #7e22ce);
-      background-size: 400% 400%;
-      animation: dynamicPurple 10s ease infinite;
-      color: #1f2937;
+      background: url('assets/pictures/robot.png') no-repeat center center fixed;
+      background-size: cover;
+      color: #f9fafb; /* Light text for better visibility */
       overflow-x: hidden;
     }
 
-    @keyframes dynamicPurple {
-      0% { background-position: 0% 50%; }
-      50% { background-position: 100% 50%; }
-      100% { background-position: 0% 50%; }
+    h1, h2, h3, h4, h5, h6 {
+      color: #ffffff; /* Bright white for headings */
+    }
+
+    p, a, li {
+      color: #d1d5db; /* Light gray for body text */
+    }
+
+    nav a:hover {
+      color: #60a5fa; /* Soft blue for hover links */
     }
 
     .bg-glass {
-      background: rgba(24, 26, 39, 0.86);
+      background: rgba(24, 26, 39, 0.9); /* Darker glass effect for better contrast */
       backdrop-filter: blur(8px);
     }
+
     .floating-shape {
       position: absolute;
       opacity: 0.5;
@@ -53,7 +59,7 @@
       background: linear-gradient(270deg, #2563eb, #10b981, #f59e0b, #2563eb);
       background-size: 200% 200%;
       animation: gradientAnim 4s ease infinite;
-      color: #ffffff;
+      color: #ffffff; /* Ensure text is visible on gradient */
       font-weight: bold;
       text-transform: uppercase;
       padding: 12px 24px;
@@ -67,28 +73,19 @@
     }
     /* Adjust contrast and hover effects for better visibility */
     .group {
-      background: linear-gradient(135deg, rgba(229, 231, 235, 0.9), rgba(243, 244, 246, 0.9));
-      color: #374151;
+      background: linear-gradient(135deg, rgba(229, 231, 235, 0.95), rgba(243, 244, 246, 0.95));
+      color: #1f2937; /* Darker text for better readability */
       transition: transform 0.3s ease, box-shadow 0.3s ease;
     }
     .group:hover {
       transform: scale(1.2);
-      box-shadow: 0 0 40px rgba(156, 163, 175, 0.9), 0 0 20px rgba(209, 213, 219, 0.7);
+      box-shadow: 0 0 50px rgba(156, 163, 175, 1), 0 0 30px rgba(209, 213, 219, 0.9);
     }
     .group h4 {
       color: #374151;
     }
     .group p {
       color: rgba(75, 85, 99, 0.9);
-    }
-    h1, h2, h3, h4, h5, h6 {
-      color: #ffffff; /* Bright white for headings */
-    }
-    p, a, li {
-      color: #d1d5db; /* Light gray for body text */
-    }
-    nav a:hover {
-      color: #60a5fa; /* Soft blue for hover links */
     }
 
     /* Add AI assistant popup styles */
@@ -122,9 +119,166 @@
       75% { transform: rotate(15deg); }
       100% { transform: rotate(0deg); }
     }
+
+    /* Sign-in modal styles */
+    .button-box {
+      display: none;
+    }
+    .signin-btn {
+      background-color: #9333ea; /* Maintain vibrant purple */
+      color: #ffffff; /* Ensure text is visible */
+      padding: 10px 20px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      font-weight: bold;
+      transition: background-color 0.3s ease;
+    }
+    .signin-btn:hover {
+      background-color: #7e22ce; /* Slightly darker hover effect */
+    }
+    .signin-page-box {
+      display: none;
+    }
+    .signin-page {
+      background: #ffffff;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+      text-align: center;
+      width: 300px;
+    }
+    .signin-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+    .signin-header h1 {
+      font-size: 24px;
+    }
+    .close-icon {
+      cursor: pointer;
+      font-size: 20px;
+      color: #9333ea;
+    }
+    .signin-input {
+      display: block;
+      width: 100%;
+      margin-bottom: 15px;
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+    }
+    .signin-submit {
+      background-color: #9333ea; /* Maintain vibrant purple */
+      color: #ffffff; /* Ensure text is visible */
+      padding: 10px 20px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      font-weight: bold;
+      transition: background-color 0.3s ease;
+    }
+    .signin-submit:hover {
+      background-color: #7e22ce; /* Slightly darker hover effect */
+    }
+    .signin-footer {
+      margin-top: 10px;
+      font-size: 14px;
+      color: #9333ea;
+    }
+    .closeSignin {
+      display: none;
+    }
+    .background-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: -1;
+    }
+    .background-image {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      opacity: 0.3;
+    }
+
+    /* Add glowing effect to the 'Get Started' button */
+    .glow-button {
+      position: relative;
+      animation: glow-animation 2s infinite;
+      box-shadow: 0 0 15px rgba(6, 182, 212, 0.9), 0 0 25px rgba(147, 51, 234, 0.7);
+    }
+
+    .glow-button::before {
+      content: '';
+      position: absolute;
+      top: -4px;
+      left: -4px;
+      right: -4px;
+      bottom: -4px;
+      border-radius: 8px;
+      background: linear-gradient(45deg, #06b6d4, #9333ea, #f59e0b, #06b6d4);
+      background-size: 300% 300%;
+      animation: glow-line 3s linear infinite;
+      z-index: -1;
+    }
+
+    @keyframes glow-animation {
+      0%, 100% {
+        box-shadow: 0 0 10px rgba(6, 182, 212, 0.8), 0 0 20px rgba(147, 51, 234, 0.6);
+      }
+      50% {
+        box-shadow: 0 0 30px rgba(6, 182, 212, 1), 0 0 40px rgba(147, 51, 234, 0.9);
+      }
+    }
+
+    @keyframes glow-line {
+      0% {
+        background-position: 0% 50%;
+      }
+      50% {
+        background-position: 100% 50%;
+      }
+      100% {
+        background-position: 0% 50%;
+      }
+    }
+
+    .text-gray-200 {
+      color: #e5e7eb; /* Slightly lighter gray for better contrast */
+    }
+
+    .text-gray-300 {
+      color: #f3f4f6; /* Lighter gray for better readability */
+    }
+
+    .text-cyan-400 {
+      color: #22d3ee; /* Bright cyan for emphasis */
+    }
+
+    .text-fuchsia-400 {
+      color: #e879f9; /* Bright fuchsia for emphasis */
+    }
+
+    .text-blue-400 {
+      color: #60a5fa; /* Bright blue for emphasis */
+    }
+
+    .text-pink-400 {
+      color: #f472b6; /* Bright pink for emphasis */
+    }
   </style>
 </head>
 <body class="relative text-white min-h-screen">
+  <!-- Background Overlay -->
+  <div class="background-overlay">
+    <img src="assets/pictures/robot.png" alt="Robot Background" class="background-image">
+  </div>
+
   <!-- Animated Particles Background -->
   <canvas id="particles-bg" class="fixed top-0 left-0 w-full h-full z-0 pointer-events-none"></canvas>
 
@@ -153,7 +307,7 @@
         <li><a href="#contact" class="hover:text-cyan-300 transition">Contact</a></li>
         <li><a href="#careers" class="hover:text-pink-300 transition">Careers</a></li>
       </ul>
-      <a href="#contact" class="ml-4 px-4 py-2 bg-cyan-600 rounded-lg shadow hover:bg-cyan-500 transition font-semibold">Get Started</a>
+      <a href="#contact" class="ml-4 px-4 py-2 bg-cyan-600 rounded-lg shadow hover:bg-cyan-500 transition font-semibold glow-button">Get Started</a>
     </nav>
   </header>
 
@@ -163,7 +317,7 @@
       <h1 class="text-4xl md:text-5xl font-extrabold mb-6 leading-tight">
         We're on a mission to <span class="text-cyan-400">revolutionize</span> the way individuals and businesses harness the power of <span class="text-fuchsia-400">artificial intelligence</span>.
       </h1>
-      <div class="text-lg text-gray-200 mb-10">
+      <div class="text-lg text-gray-200 mb-10" style="font-family: 'Courier New', Courier, monospace;">
         TumzyTech empowers your future with advanced, intuitive, and responsible AI technologies—bridging the gap between ambition and impact.
       </div>
       <a href="#services" class="inline-block px-8 py-3 animated-gradient rounded-xl font-bold text-lg shadow-lg hover:scale-105 transition transform">Explore Solutions</a>
@@ -304,10 +458,10 @@
       </p>
       <form class="space-y-5" method="POST" action="mailto:contact@tumzytech.com" enctype="text/plain">
         <div class="flex gap-3">
-          <input type="text" name="Name" required class="flex-1 px-3 py-2 rounded-md bg-gray-800 text-white border border-gray-700 focus:border-cyan-400 transition focus:outline-none" placeholder="Your Name">
-          <input type="email" name="Email" required class="flex-1 px-3 py-2 rounded-md bg-gray-800 text-white border border-gray-700 focus:border-cyan-400 transition focus:outline-none" placeholder="Your Email">
+          <input type="text" name="Name" id="name" autocomplete="name" required class="flex-1 px-3 py-2 rounded-md bg-gray-800 text-white border border-gray-700 focus:border-cyan-400 transition focus:outline-none" placeholder="Your Name">
+          <input type="email" name="Email" id="email" autocomplete="email" required class="flex-1 px-3 py-2 rounded-md bg-gray-800 text-white border border-gray-700 focus:border-cyan-400 transition focus:outline-none" placeholder="Your Email">
         </div>
-        <textarea name="Message" rows="4" required class="w-full px-3 py-2 rounded-md bg-gray-800 text-white border border-gray-700 focus:border-fuchsia-400 transition focus:outline-none" placeholder="Your Message"></textarea>
+        <textarea name="Message" id="message" autocomplete="on" rows="4" required class="w-full px-3 py-2 rounded-md bg-gray-800 text-white border border-gray-700 focus:border-fuchsia-400 transition focus:outline-none" placeholder="Your Message"></textarea>
         <button type="submit" class="px-8 py-2 animated-gradient font-bold rounded-xl shadow-lg hover:scale-105 transition transform text-lg">Send Message</button>
       </form>
     </div>
@@ -479,6 +633,19 @@
           }
         }
       });
+    });
+
+    // Sign-in Modal Script
+    const signinButton = document.getElementById('signinButton');
+    const signinPage = document.getElementById('signinPage');
+    const closeIcon = document.getElementById('closeIcon');
+
+    signinButton.addEventListener('click', () => {
+      signinPage.classList.remove('closeSignin');
+    });
+
+    closeIcon.addEventListener('click', () => {
+      signinPage.classList.add('closeSignin');
     });
   </script>
 </body>

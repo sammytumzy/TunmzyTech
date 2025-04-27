@@ -14,6 +14,47 @@ aiAssistant.addEventListener('click', () => {
   }
 });
 
+// Parallax effect for elements with the class "parallax"
+document.addEventListener("mousemove", (event) => {
+    const x = event.clientX / window.innerWidth - 0.5;
+    const y = event.clientY / window.innerHeight - 0.5;
+
+    document.querySelectorAll(".parallax").forEach((element) => {
+        const speed = element.getAttribute("data-speed");
+        element.style.transform = `translate(${x * speed * 20}px, ${y * speed * 20}px)`;
+    });
+});
+
+// Sign-in page open and close animation
+const signinButton = document.getElementById('signinButton');
+const signinPage = document.getElementById('signinPage');
+const closeIcon = document.getElementById('closeIcon');
+
+signinButton?.addEventListener('click', function() {
+    signinPage?.classList.remove('closeSignin');
+    signinPage?.classList.add("openSignin");
+});
+
+closeIcon?.addEventListener('click', function() {
+    signinPage?.classList.remove("openSignin");
+    signinPage?.classList.add('closeSignin');
+});
+
+// Sidebar open and close functionality
+const sideBar = document.querySelector('.sidebar');
+const menuButton = document.querySelector('.menu-icon');
+const closeButton = document.querySelector('.close-icon');
+
+menuButton?.addEventListener("click", function() {
+    sideBar?.classList.remove('close-sidebar');
+    sideBar?.classList.add('open-sidebar');
+});
+
+closeButton?.addEventListener("click", function() {
+    sideBar?.classList.remove('open-sidebar');
+    sideBar?.classList.add('close-sidebar');
+});
+
 // AI Particle System for Chat Page Background
 const chatCanvas = document.getElementById('particles-bg');
 if (chatCanvas) {
@@ -152,3 +193,38 @@ if (marketChartCanvas) {
   // Update the chart every 5 seconds
   setInterval(updateMarketData, 5000);
 }
+
+// Optimize animations for better performance
+const optimizeAnimations = () => {
+  document.querySelectorAll('.animated').forEach((el) => {
+    el.style.willChange = 'transform, opacity';
+  });
+};
+
+optimizeAnimations();
+
+// Add scroll-triggered animations for sections
+const sections = document.querySelectorAll('.section');
+
+const revealSection = () => {
+  sections.forEach((section) => {
+    const rect = section.getBoundingClientRect();
+    if (rect.top < window.innerHeight * 0.8) {
+      section.classList.add('visible');
+    }
+  });
+};
+
+window.addEventListener('scroll', revealSection);
+window.addEventListener('load', revealSection);
+
+// Replace AI tech icons animation with video background
+const videoBackgroundContainer = document.createElement('div');
+videoBackgroundContainer.id = 'video-background';
+videoBackgroundContainer.innerHTML = `
+  <video autoplay muted loop>
+    <source src="assets/videos/background-video.mp4" type="video/mp4">
+    Your browser does not support the video tag.
+  </video>
+`;
+document.body.appendChild(videoBackgroundContainer);
