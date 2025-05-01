@@ -9,6 +9,15 @@
   <link rel="icon" href="assets/pictures/favicon.ico" type="image/x-icon">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/bodymovin/5.9.6/lottie.min.js"></script>
   <style>
+    /* Placeholder background for faster initial load */
+    body {
+      background: url('assets/pictures/robot-placeholder.png') center/cover no-repeat;
+      background-color: #4c1d95; /* Fallback color */
+    }
+    #video-background {
+      display: none;
+    }
+
     /* Add a dynamic purple gradient background */
     body {
       background: linear-gradient(270deg, #7e22ce, #4c1d95, #9333ea, #7e22ce);
@@ -170,6 +179,11 @@
       image-rendering: auto;
       -webkit-optimize-contrast: high;
     }
+
+    /* Adjust spacing for chatbox */
+    .chatbox {
+      margin-top: 20px; /* Add spacing between 'Back to Homepage' and chatbox */
+    }
   </style>
 </head>
 <body>
@@ -194,6 +208,12 @@
     </form>
   </div>
   <script>
+    // Lazy load the video background
+    window.addEventListener('load', function() {
+      const videoBackground = document.getElementById('video-background');
+      videoBackground.style.display = 'block';
+    });
+
     const chatWindow = document.getElementById('chat-window');
     const chatForm = document.getElementById('chat-form');
     const userInput = document.getElementById('user-input');

@@ -12,6 +12,12 @@
   <link href="https://cdn.jsdelivr.net/npm/@fontsource/inter@4.5.0/index.min.css" rel="stylesheet">
   <!-- Chart.js 4.4.3 for visualization -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+  <!-- Include THREE.js Library -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <!-- Include GLTFLoader -->
+  <script src="https://cdn.jsdelivr.net/npm/three/examples/js/loaders/GLTFLoader.js"></script>
+  <!-- Add Google Model Viewer Library -->
+  <script type="module" src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js"></script>
   <link rel="stylesheet" href="assets/css/styles.css">
   <script src="assets/js/scripts.js" defer></script>
   <link rel="icon" href="assets/pictures/robot.ico" type="image/x-icon">
@@ -20,8 +26,8 @@
     html, body {
       height: 100%;
       font-family: 'Inter', sans-serif;
-      background: url('assets/pictures/robot.png') no-repeat center center fixed;
-      background-size: cover;
+      background: url('assets/pictures/aihelphuman.jpg') no-repeat center center fixed;
+      background-size: cover; /* Ensure the image covers the entire background */
       color: #f9fafb; /* Light text for better visibility */
       overflow-x: hidden;
     }
@@ -204,6 +210,7 @@
       height: 100%;
       object-fit: cover;
       opacity: 0.3;
+      display: none;
     }
 
     /* Add glowing effect to the 'Get Started' button */
@@ -271,13 +278,193 @@
     .text-pink-400 {
       color: #f472b6; /* Bright pink for emphasis */
     }
+
+    /* Updated Navbar Styles */
+    nav {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px 32px;
+      background-color: transparent; /* Removed black background */
+    }
+
+    .logo {
+      font-size: 36px; /* Increase font size */
+      font-weight: bold;
+      font-family: 'Courier New', Courier, monospace; /* Change font to a more distinct one */
+      text-shadow: 0 0 15px #ffffff, 0 0 30px #a855f7, 0 0 45px #9333ea; /* Add beaming effect */
+    }
+
+    .glow-logo {
+      color: white;
+      text-shadow: 0 0 10px #ffffff, 0 0 20px #a855f7, 0 0 30px #a855f7;
+    }
+
+    .nav-links {
+      list-style: none;
+      display: flex;
+      gap: 20px;
+      margin: 0;
+      padding: 0;
+    }
+
+    .nav-links li a {
+      text-decoration: none;
+      color: white;
+      font-weight: 500;
+    }
+
+    .nav-links li a:hover {
+      color: #a855f7;
+    }
+
+    .get-started {
+      padding: 10px 20px;
+      background-color: #fff;
+      color: #a855f7;
+      font-weight: bold;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.3s ease-in-out;
+    }
+
+    .glow-btn {
+      box-shadow: 0 0 10px #ffffff, 0 0 20px #a855f7;
+    }
+
+    .glow-btn:hover {
+      box-shadow: 0 0 15px #ffffff, 0 0 30px #a855f7;
+      transform: scale(1.05);
+    }
+
+    .hamburger {
+      display: none;
+      flex-direction: column;
+      cursor: pointer;
+    }
+
+    .hamburger div {
+      width: 25px;
+      height: 3px;
+      background-color: white;
+      margin: 3px 0;
+    }
+
+    .footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px 32px;
+      background-color: transparent;
+      flex-wrap: wrap;
+    }
+
+    .footer-logo {
+      font-size: 24px;
+      font-weight: bold;
+      color: white;
+      text-shadow: 0 0 10px #ffffff, 0 0 20px #a855f7, 0 0 30px #a855f7;
+    }
+
+    .footer-links {
+      list-style: none;
+      display: flex;
+      gap: 20px;
+      margin: 0;
+      padding: 0;
+      flex-wrap: wrap;
+    }
+
+    .footer-links li a {
+      text-decoration: none;
+      color: white;
+      font-weight: 500;
+    }
+
+    .footer-links li a:hover {
+      color: #a855f7;
+    }
+
+    .social-media {
+      display: flex;
+      gap: 15px;
+    }
+
+    .social-icon {
+      color: white;
+      font-size: 20px;
+      transition: color 0.3s ease, transform 0.3s ease;
+    }
+
+    .social-icon:hover {
+      color: #a855f7;
+      transform: scale(1.2);
+    }
+
+    @media (max-width: 768px) {
+      .nav-links {
+        display: none;
+        flex-direction: column;
+        gap: 10px;
+        background-color: rgba(15, 15, 27, 0.9);
+        position: absolute;
+        top: 60px;
+        right: 0;
+        width: 200px;
+        padding: 10px;
+        border-radius: 8px;
+      }
+
+      .nav-links.active {
+        display: flex;
+      }
+
+      .hamburger {
+        display: flex;
+      }
+
+      .footer {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+
+      .footer-links {
+        flex-direction: column;
+        gap: 10px;
+      }
+
+      .social-media {
+        margin-top: 10px;
+      }
+    }
+
+    .centered-3d-model {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 250px; /* Reduced height for better spacing */
+      margin: 10px auto; /* Reduced margin for closer alignment */
+    }
+
+    .mt-14 {
+      margin-top: 20px; /* Adjusted margin for the AI trend graph */
+    }
   </style>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const hamburger = document.querySelector('.hamburger');
+      const navLinks = document.querySelector('.nav-links');
+
+      hamburger.addEventListener('click', () => {
+        navLinks.classList.toggle('active');
+      });
+    });
+  </script>
 </head>
 <body class="relative text-white min-h-screen">
   <!-- Background Overlay -->
-  <div class="background-overlay">
-    <img src="assets/pictures/robot.png" alt="Robot Background" class="background-image">
-  </div>
+  <div class="background-overlay"></div>
 
   <!-- Animated Particles Background -->
   <canvas id="particles-bg" class="fixed top-0 left-0 w-full h-full z-0 pointer-events-none"></canvas>
@@ -294,22 +481,22 @@
   </span>
 
   <!-- Navbar -->
-  <header class="w-full z-10 relative">
-    <nav class="flex items-center justify-between px-6 py-4 max-w-7xl mx-auto">
-      <div class="flex items-center gap-3">
-        <img src="assets/pictures/chatty bot.gif" alt="TumzyTech Logo" class="w-10 h-10 rounded-full">
-        <span class="text-2xl font-bold tracking-tight text-white">TumzyTech</span>
-      </div>
-      <ul class="hidden md:flex space-x-7 text-lg">
-        <li><a href="#mission" class="hover:text-cyan-400 transition">Mission</a></li>
-        <li><a href="#services" class="hover:text-fuchsia-400 transition">Services</a></li>
-        <li><a href="#products" class="hover:text-blue-400 transition">Products</a></li>
-        <li><a href="#contact" class="hover:text-cyan-300 transition">Contact</a></li>
-        <li><a href="#careers" class="hover:text-pink-300 transition">Careers</a></li>
-      </ul>
-      <a href="#contact" class="ml-4 px-4 py-2 bg-cyan-600 rounded-lg shadow hover:bg-cyan-500 transition font-semibold glow-button">Get Started</a>
-    </nav>
-  </header>
+  <nav>
+    <div class="logo glow-logo">TumzyTech</div>
+    <div class="hamburger">
+      <div></div>
+      <div></div>
+      <div></div>
+    </div>
+    <ul class="nav-links">
+      <li><a href="#mission">Mission</a></li>
+      <li><a href="#services">Services</a></li>
+      <li><a href="#products">Products</a></li>
+      <li><a href="#contact">Contact</a></li>
+      <li><a href="#careers">Careers</a></li>
+    </ul>
+    <button class="get-started glow-btn">Get Started</button>
+  </nav>
 
   <!-- HERO SECTION -->
   <section id="mission" class="w-full pt-20 pb-20 relative z-10">
@@ -446,6 +633,28 @@
           <canvas id="marketChart" width="420" height="220"></canvas>
         </div>
       </div>
+      <!-- Fallback Model Viewer for Testing -->
+      <model-viewer 
+        id="test-model-viewer" 
+        src="assets/pictures/flying.glb" 
+        alt="3D Model" 
+        auto-rotate 
+        camera-controls 
+        style="width: 300px; height: 300px; background-color: transparent;">
+      </model-viewer>
+      <!-- Rotating 3D Model -->
+      <div class="centered-3d-model">
+        <model-viewer 
+          src="assets/pictures/robot plaground.glb" 
+          alt="3D Model" 
+          auto-rotate 
+          autoplay 
+          disable-zoom 
+          camera-controls="false" 
+          interaction-prompt="none" 
+          style="width: 100%; max-width: 400px; height: 100%;">
+        </model-viewer>
+      </div>
     </div>
   </section>
 
@@ -488,30 +697,28 @@
   </section>
 
   <!-- FOOTER -->
-  <footer class="bg-glass z-20 relative mt-12 shadow-2xl">
-    <div class="max-w-7xl mx-auto px-6 py-7 flex flex-col md:flex-row items-center justify-between gap-4">
-      <div class="flex items-center gap-2">
-        <span class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-gradient-to-tr from-indigo-500 to-purple-700 shadow mr-1">
-          <i class="fas fa-brain"></i>
-        </span>
-        <span class="text-lg font-semibold tracking-tight">TumzyTech</span>
-      </div>
-      <nav class="flex space-x-6 text-sm">
-        <a href="#mission" class="hover:text-cyan-400">Mission</a>
-        <a href="#services" class="hover:text-fuchsia-400">Services</a>
-        <a href="#products" class="hover:text-blue-400">Products</a>
-        <a href="#contact" class="hover:text-cyan-300">Contact</a>
-        <a href="#careers" class="hover:text-pink-300">Careers</a>
-      </nav>
-      <div class="flex space-x-4 text-lg">
-        <a href="#" title="Twitter" class="hover:text-cyan-400"><i class="fab fa-twitter"></i></a>
-        <a href="#" title="Facebook" class="hover:text-blue-500"><i class="fab fa-facebook"></i></a>
-        <a href="#" title="GitHub" class="hover:text-white"><i class="fab fa-github"></i></a>
-        <a href="#" title="LinkedIn" class="hover:text-blue-300"><i class="fab fa-linkedin"></i></a>
-      </div>
-    </div>
-    <div class="mt-2 mb-4 text-center text-xs text-gray-400">
-      © 2024 TumzyTech. All rights reserved.
+  <footer class="footer">
+    <div class="footer-logo glow-logo">TumzyTech</div>
+    <ul class="footer-links">
+      <li><a href="#mission">Mission</a></li>
+      <li><a href="#services">Services</a></li>
+      <li><a href="#products">Products</a></li>
+      <li><a href="#contact">Contact</a></li>
+      <li><a href="#careers">Careers</a></li>
+    </ul>
+    <div class="social-media">
+      <a href="https://twitter.com" target="_blank" title="Twitter" class="social-icon">
+        <i class="fab fa-twitter"></i>
+      </a>
+      <a href="https://facebook.com" target="_blank" title="Facebook" class="social-icon">
+        <i class="fab fa-facebook"></i>
+      </a>
+      <a href="https://github.com" target="_blank" title="GitHub" class="social-icon">
+        <i class="fab fa-github"></i>
+      </a>
+      <a href="https://linkedin.com" target="_blank" title="LinkedIn" class="social-icon">
+        <i class="fab fa-linkedin"></i>
+      </a>
     </div>
   </footer>
 
@@ -640,12 +847,23 @@
     const signinPage = document.getElementById('signinPage');
     const closeIcon = document.getElementById('closeIcon');
 
-    signinButton.addEventListener('click', () => {
-      signinPage.classList.remove('closeSignin');
-    });
+    if (signinButton) {
+      signinButton.addEventListener('click', () => {
+        signinPage.classList.remove('closeSignin');
+      });
+    }
 
-    closeIcon.addEventListener('click', () => {
-      signinPage.classList.add('closeSignin');
+    if (closeIcon) {
+      closeIcon.addEventListener('click', () => {
+        signinPage.classList.add('closeSignin');
+      });
+    }
+
+    // Lazy load the full background image
+    window.addEventListener('load', function() {
+      const bgImage = document.querySelector('.background-image');
+      bgImage.style.display = 'block';
+      bgImage.src = 'assets/pictures/robot.png';
     });
   </script>
 </body>

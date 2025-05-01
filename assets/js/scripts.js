@@ -1,18 +1,6 @@
 /* Moved all JavaScript from index.html to this file */
-const canvas = document.getElementById('particles-bg');
-const ctx = canvas.getContext('2d');
-
-// Add functionality to toggle the chat popup
-const aiAssistant = document.getElementById('ai-assistant');
-const chatPopup = document.getElementById('chat-popup');
-
-aiAssistant.addEventListener('click', () => {
-  if (chatPopup.style.display === 'none' || chatPopup.style.display === '') {
-    chatPopup.style.display = 'flex';
-  } else {
-    chatPopup.style.display = 'none';
-  }
-});
+const particlesCanvas = document.getElementById('particles-bg');
+const particlesCtx = particlesCanvas.getContext('2d');
 
 // Parallax effect for elements with the class "parallax"
 document.addEventListener("mousemove", (event) => {
@@ -228,3 +216,62 @@ videoBackgroundContainer.innerHTML = `
   </video>
 `;
 document.body.appendChild(videoBackgroundContainer);
+
+// Initialize Three.js for the logo
+const logoCanvas = document.getElementById('logo-canvas');
+logoCanvas.width = 100;
+logoCanvas.height = 100;
+const logoRenderer = new THREE.WebGLRenderer({ canvas: logoCanvas, antialias: true, alpha: true });
+logoRenderer.setSize(logoCanvas.clientWidth, logoCanvas.clientHeight);
+const logoScene = new THREE.Scene();
+const logoCamera = new THREE.PerspectiveCamera(75, logoCanvas.clientWidth / logoCanvas.clientHeight, 0.1, 1000);
+logoCamera.position.z = 2;
+
+// Add lighting to the logo scene
+const logoLight = new THREE.DirectionalLight(0xffffff, 1);
+logoLight.position.set(5, 5, 5).normalize();
+logoScene.add(logoLight);
+
+// Load the 3D model for the logo
+const logoLoader = new THREE.GLTFLoader();
+logoLoader.load('assets/pictures/flying.glb', function (gltf) {
+  const logoModel = gltf.scene;
+  logoScene.add(logoModel);
+
+  // Adjust the model's position and scale for the logo
+  logoModel.position.set(0, -0.5, 0);
+  logoModel.scale.set(0.5, 0.5, 0.5);
+
+  // Animation loop for the logo
+  function animateLogo() {
+    requestAnimationFrame(animateLogo);
+    logoModel.rotation.y += 0.01; // Rotate the model for animation
+    logoRenderer.render(logoScene, logoCamera);
+  }
+  animateLogo();
+}, function (xhr) {
+  console.log(`Loading progress: ${(xhr.loaded / xhr.total * 100).toFixed(2)}% loaded`);
+}, function (error) {
+  console.error('Failed to load the 3D model:', error);
+  alert('The 3D model could not be loaded. Please check the file or try another model.');
+});
+
+// Reposition the 3D logo under the TumzyTech header and add mouse movement interaction
+const header = document.querySelector('nav');
+const logoCanvasContainer = document.createElement('div');
+logoCanvasContainer.style.position = 'relative';
+logoCanvasContainer.style.margin = '0 auto';
+logoCanvasContainer.style.width = '100px';
+logoCanvasContainer.style.height = '100px';
+logoCanvasContainer.style.display = 'flex';
+logoCanvasContainer.style.justifyContent = 'center';
+logoCanvasContainer.style.alignItems = 'center';
+header.insertAdjacentElement('afterend', logoCanvas);
+
+// Add mouse movement interaction for dynamic rotation
+window.addEventListener('mousemove', (event) => {
+  const x = (event.clientX / window.innerWidth - 0.5) * 2;
+  const y = (event.clientY / window.innerHeight - 0.5) * 2;
+  logoModel.rotation.x = y * 0.5;
+  logoModel.rotation.y = x * 0.5;
+});
