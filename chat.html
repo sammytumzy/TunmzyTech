@@ -184,10 +184,16 @@
     .chatbox {
       margin-top: 20px; /* Add spacing between 'Back to Homepage' and chatbox */
     }
+
+    @media (max-width: 768px) {
+      .back-button {
+        margin-bottom: 20px; /* Add spacing between the back button and the chat box */
+      }
+    }
   </style>
 </head>
 <body>
-  <a href="index.html" class="absolute top-4 left-4 px-4 py-2 bg-cyan-600 rounded-lg shadow hover:bg-cyan-500 transition font-semibold text-white">Back to Homepage</a>
+  <a href="index.html" class="absolute top-4 left-4 px-6 py-3 text-purple-500 rounded-lg shadow hover:text-purple-400 transition font-semibold text-lg glow-logo back-button">Back</a>
   <div id="video-background">
     <video autoplay muted loop>
       <source src="assets/videos/background-video.mp4" type="video/mp4">

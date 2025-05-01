@@ -21,6 +21,9 @@
   <link rel="stylesheet" href="assets/css/styles.css">
   <script src="assets/js/scripts.js" defer></script>
   <link rel="icon" href="assets/pictures/robot.ico" type="image/x-icon">
+  <link rel="preload" href="assets/pictures/robot plaground.glb" as="fetch" type="model/gltf-binary" crossorigin="anonymous">
+  <link rel="preload" href="assets/pictures/aihelphuman.jpg" as="image" type="image/jpeg">
+  <link rel="preload" href="assets/videos/background-video.mp4" as="video" type="video/mp4">
   <style>
     /* Adjust text and background colors for better contrast */
     html, body {
@@ -495,8 +498,22 @@
       <li><a href="#contact">Contact</a></li>
       <li><a href="#careers">Careers</a></li>
     </ul>
-    <button class="get-started glow-btn">Get Started</button>
+    <button class="get-started glow-btn" onclick="location.href='#mission'">Get Started</button>
   </nav>
+
+  <!-- 3D Logo Section -->
+  <div class="centered-3d-model mt-10">
+    <model-viewer 
+      src="assets/pictures/robot plaground.glb" 
+      alt="3D Model" 
+      auto-rotate 
+      autoplay 
+      disable-zoom 
+      camera-controls="false" 
+      interaction-prompt="none" 
+      style="width: 100%; max-width: 400px; height: 100%;">
+    </model-viewer>
+  </div>
 
   <!-- HERO SECTION -->
   <section id="mission" class="w-full pt-20 pb-20 relative z-10">
@@ -625,35 +642,6 @@
           </div>
           <p class="text-sm text-gray-300">AI-powered research for academics and students: literature review, data analysis, citation generation.</p>
         </div>
-      </div>
-      <!-- Chart Visualization Demo -->
-      <div class="mt-14 flex justify-center">
-        <div class="bg-glass p-6 rounded-2xl shadow-lg w-full max-w-lg">
-          <h3 class="font-bold text-center mb-3 text-lg">Real-Time AI Market Trends</h3>
-          <canvas id="marketChart" width="420" height="220"></canvas>
-        </div>
-      </div>
-      <!-- Fallback Model Viewer for Testing -->
-      <model-viewer 
-        id="test-model-viewer" 
-        src="assets/pictures/flying.glb" 
-        alt="3D Model" 
-        auto-rotate 
-        camera-controls 
-        style="width: 300px; height: 300px; background-color: transparent;">
-      </model-viewer>
-      <!-- Rotating 3D Model -->
-      <div class="centered-3d-model">
-        <model-viewer 
-          src="assets/pictures/robot plaground.glb" 
-          alt="3D Model" 
-          auto-rotate 
-          autoplay 
-          disable-zoom 
-          camera-controls="false" 
-          interaction-prompt="none" 
-          style="width: 100%; max-width: 400px; height: 100%;">
-        </model-viewer>
       </div>
     </div>
   </section>

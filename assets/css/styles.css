@@ -5,9 +5,10 @@ html, body {
 
 /* Update chat page background to make the robot picture fuller */
 body {
+  background-color: #121212; /* Set a dark background color */
   background: url('../pictures/robot.png') no-repeat center center fixed;
   background-size: cover;
-  color: #ffffff; /* Ensure text is bright and readable */
+  color: #ffffff; /* Ensure text is readable on dark background */
   padding: 20px; /* Add padding around the body for better spacing */
 }
 
@@ -185,6 +186,34 @@ p, a, li {
   p {
     font-size: 1rem; /* Ensure text is readable */
   }
+
+  .get-started {
+    display: none;
+  }
+
+  .hamburger {
+    position: absolute;
+    top: 16px; /* Aligns with TumzyTech logo */
+    right: 16px;
+  }
+}
+
+/* For mobile navigation */
+.navbar, .navbar-brand {
+  display: flex;
+  align-items: center;
+}
+
+/* Target the hamburger button */
+.navbar-toggler {
+  margin: 0;
+  padding: 0.25rem 0.5rem;
+  align-self: center;
+}
+
+/* Ensure logo and brand are vertically aligned */
+.navbar-brand img {
+  vertical-align: middle;
 }
 
 /* Parallax effect for hero section */
@@ -375,9 +404,15 @@ img, video {
   -webkit-optimize-contrast: high;
 }
 
+/* Lazy loading is handled via HTML attributes */
+img, video, model-viewer {
+  /* Removed invalid CSS property */
+}
+
 /* Add futuristic animations */
 .chat-container {
   animation: fadeInUp 1.5s ease-in-out;
+  margin-top: 80px; /* Increased margin to bring the chat box lower */
 }
 
 @keyframes fadeInUp {

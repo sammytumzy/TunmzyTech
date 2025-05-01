@@ -275,3 +275,13 @@ window.addEventListener('mousemove', (event) => {
   logoModel.rotation.x = y * 0.5;
   logoModel.rotation.y = x * 0.5;
 });
+
+// Log when lazy-loaded elements are successfully loaded
+document.addEventListener('DOMContentLoaded', () => {
+    const lazyElements = document.querySelectorAll('img, video, model-viewer');
+    lazyElements.forEach(el => {
+        el.addEventListener('load', () => {
+            console.log(`${el.tagName} loaded successfully.`);
+        });
+    });
+});
