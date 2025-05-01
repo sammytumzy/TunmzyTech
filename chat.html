@@ -187,7 +187,14 @@
 
     @media (max-width: 768px) {
       .back-button {
-        margin-bottom: 20px; /* Add spacing between the back button and the chat box */
+        position: absolute;
+        top: 10px;
+        left: 10px;
+        margin-bottom: 0; /* Remove extra spacing */
+      }
+
+      .chat-header {
+        margin-top: 50px; /* Add spacing to align with the back button */
       }
     }
   </style>
