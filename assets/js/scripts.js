@@ -285,3 +285,10 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 });
+
+// Add error handling for 3D model loading
+const modelViewer = document.querySelector('model-viewer');
+modelViewer.addEventListener('error', (event) => {
+  console.error('Error loading 3D model:', event);
+  alert('The 3D model could not be loaded. Please check your internet connection or try again later.');
+});

@@ -452,3 +452,17 @@ img, video, model-viewer {
   background-color: #0f0f1b; /* Retain the black background */
   padding: 20px; /* Add padding to the footer for better spacing */
 }
+
+/* Optimize large assets */
+@media (max-width: 768px) {
+  body {
+    background-size: contain; /* Ensure the robot image fits within the screen */
+    background-position: top center; /* Center the image for better visibility */
+  }
+}
+
+/* Add hover effects for buttons */
+button:hover {
+  transform: scale(1.1);
+  box-shadow: 0 0 20px rgba(124, 58, 237, 0.8), 0 0 10px rgba(37, 99, 235, 0.6);
+}

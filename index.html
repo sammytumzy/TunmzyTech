@@ -28,6 +28,7 @@
   <link rel="preload" href="assets/pictures/robot plaground.glb" as="fetch" type="model/gltf-binary" crossorigin="anonymous">
   <link rel="preload" href="assets/pictures/aihelphuman.jpg" as="image" type="image/jpeg">
   <link rel="preload" href="assets/videos/background-video.mp4" as="video" type="video/mp4">
+  <meta name="description" content="TumzyTech - Revolutionizing AI Solutions for Business & Innovation. Explore AI-driven services, products, and solutions for businesses and individuals.">
   <style>
     /* Adjust text and background colors for better contrast */
     html, body {
@@ -470,6 +471,11 @@
     .mt-14 {
       margin-top: 20px; /* Adjusted margin for the AI trend graph */
     }
+
+    a:focus, button:focus {
+      outline: 2px solid #9333ea;
+      outline-offset: 2px;
+    }
   </style>
   <script>
     document.addEventListener('DOMContentLoaded', () => {
@@ -522,7 +528,7 @@
   <div class="centered-3d-model mt-10">
     <model-viewer 
       src="assets/pictures/robot plaground.glb" 
-      alt="3D Model" 
+      alt="3D Model of a robot playground" 
       auto-rotate 
       autoplay 
       disable-zoom 
@@ -530,6 +536,9 @@
       interaction-prompt="none" 
       style="width: 100%; max-width: 400px; height: 100%;">
     </model-viewer>
+    <noscript>
+      <p>Your browser does not support JavaScript or 3D models. Please enable JavaScript or use a modern browser to view this content.</p>
+    </noscript>
   </div>
 
   <!-- HERO SECTION -->
