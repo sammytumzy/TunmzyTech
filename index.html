@@ -18,6 +18,8 @@
   <script src="https://cdn.jsdelivr.net/npm/three/examples/js/loaders/GLTFLoader.js"></script>
   <!-- Add Google Model Viewer Library -->
   <script type="module" src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js"></script>
+  <!-- Pi Network SDK -->
+  <script src="https://sdk.minepi.com/pi-sdk.js"></script>
   <link rel="stylesheet" href="assets/css/styles.css">
   <script src="assets/js/scripts.js" defer></script>
   <link rel="icon" href="assets/pictures/favicon_io (4)/favicon.ico" type="image/x-icon">
@@ -487,6 +489,68 @@
       });
     });
   </script>
+  <script>
+    // Check user authentication status
+    async function checkAuthStatus() {
+      try {
+        const response = await fetch('/auth/status');
+        const data = await response.json();
+
+        if (data.isAuthenticated) {
+          document.getElementById('auth-status').textContent = `Welcome, ${data.user.name}`;
+        } else {
+          document.getElementById('auth-status').textContent = 'Not logged in';
+        }
+      } catch (error) {
+        console.error('Error checking authentication status:', error);
+      }
+    }
+
+    checkAuthStatus();
+  </script>
+  <script>
+    // Initialize Pi Network SDK
+    const pi = window.Pi;
+    pi.init({
+      version: "2.0",
+      onIncompletePaymentFound: (payment) => {
+        console.log("Incomplete payment found:", payment);
+      },
+    });
+
+    // Authenticate user with Pi Network
+    async function authenticateWithPi() {
+      try {
+        const scopes = ["username", "payments"];
+        const user = await pi.authenticate(scopes, onIncompletePaymentFound);
+        console.log("Authenticated user:", user);
+        document.getElementById("auth-status").textContent = `Welcome, ${user.username}`;
+      } catch (error) {
+        console.error("Authentication failed:", error);
+      }
+    }
+
+    // Call authentication on page load
+    document.addEventListener("DOMContentLoaded", authenticateWithPi);
+  </script>
+  <script>
+    // Function to initiate Pi payment
+    async function initiatePayment(amount, memo, metadata) {
+      try {
+        const payment = await pi.createPayment({
+          amount,
+          memo,
+          metadata,
+        });
+
+        console.log('Payment initiated:', payment);
+        alert('Payment successful!');
+      } catch (error) {
+        console.error('Payment failed:', error);
+        alert('Payment failed. Please try again.');
+      }
+    }
+  </script>
 </head>
 <body class="relative text-white min-h-screen">
   <!-- Background Overlay -->
@@ -719,6 +783,8 @@
       <li><a href="#products">Products</a></li>
       <li><a href="#contact">Contact</a></li>
       <li><a href="#careers">Careers</a></li>
+      <li><a href="privacy.html">Privacy Policy</a></li>
+      <li><a href="terms.html">Terms & Conditions</a></li>
     </ul>
     <div class="social-media">
       <a href="https://twitter.com" target="_blank" title="Twitter" class="social-icon">

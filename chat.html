@@ -8,6 +8,7 @@
   <link rel="stylesheet" href="assets/css/styles.css">
   <link rel="icon" href="assets/pictures/favicon.ico" type="image/x-icon">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/bodymovin/5.9.6/lottie.min.js"></script>
+  <script src="https://sdk.minepi.com/pi-sdk.js"></script>
   <style>
     /* Placeholder background for faster initial load */
     body {
@@ -220,6 +221,7 @@
       <input type="text" id="user-input" placeholder="Type your message...">
       <button type="submit">Send</button>
     </form>
+    <button id="pay-button" class="px-4 py-2 bg-blue-500 text-white rounded mt-2">Pay with Pi</button>
   </div>
   <script>
     // Lazy load the video background
@@ -251,26 +253,97 @@
       chatWindow.appendChild(botMessageDiv);
     }
 
-    chatForm.addEventListener('submit', (e) => {
+    chatForm.addEventListener('submit', async (e) => {
       e.preventDefault();
-      const userMessage = userInput.value.trim();
-      if (userMessage) {
+      const message = userInput.value.trim();
+      if (message) {
         const userMessageDiv = document.createElement('div');
         userMessageDiv.className = 'chat-message user';
-        userMessageDiv.textContent = userMessage;
+        userMessageDiv.textContent = message;
         chatWindow.appendChild(userMessageDiv);
         userInput.value = '';
         chatWindow.scrollTop = chatWindow.scrollHeight;
-
-        // Simulate bot response
-        setTimeout(() => {
+        try {
+          const response = await fetch('/api/chatbot', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ message }),
+          });
+          const data = await response.json();
           const botMessageDiv = document.createElement('div');
           botMessageDiv.className = 'chat-message bot';
-          botMessageDiv.textContent = 'Thank you for your message! Let me assist you with that.';
+          botMessageDiv.textContent = data.response;
           chatWindow.appendChild(botMessageDiv);
           chatWindow.scrollTop = chatWindow.scrollHeight;
-        }, 1000);
+        } catch (error) {
+          console.error('Error communicating with chatbot API:', error);
+        }
       }
+    });
+  </script>
+  <script>
+    // Initialize Pi Network SDK in sandbox mode
+    const pi = window.Pi;
+    pi.init({
+      version: "2.0",
+      sandbox: true, // Enable sandbox mode for testnet
+      onIncompletePaymentFound: (payment) => {
+        console.log("Incomplete payment found:", payment);
+      },
+    });
+
+    // Authenticate with Pi Network with required scopes
+    const scopes = ['username', 'payments'];
+    pi.authenticate(scopes, (payment) => {
+      console.log('Incomplete payment found:', payment);
+    }).then(auth => {
+      window.piUser = auth.user;
+      window.piAccessToken = auth.accessToken;
+      // Optionally display username in UI
+      // document.getElementById('auth-status').textContent = `Welcome, ${auth.user.username}`;
+    }).catch(error => {
+      console.error('Pi authentication failed:', error);
+    });
+
+    // Pi Payment Integration with recommended callbacks
+    const paymentData = {
+      amount: 5,
+      memo: 'Monthly subscription for TumzyTech',
+      metadata: { service: 'Chatbot Subscription', period: '1 month' },
+      to: 'GD5XOGYAAVODXKBIJXFGZUQXA3VDHYT5NX2OIUFG4IRDPL3SLXH5O5KM'
+    };
+    const paymentCallbacks = {
+      onReadyForServerApproval: function(paymentId) {
+        fetch('/api/pi/approve', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ paymentId })
+        });
+      },
+      onReadyForServerCompletion: function(paymentId, txid) {
+        fetch('/api/pi/complete', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ paymentId, txid })
+        });
+      },
+      onCancel: function(paymentId) {
+        alert('Payment cancelled.');
+      },
+      onError: function(error, payment) {
+        alert('Payment error: ' + error);
+      }
+    };
+    document.getElementById('pay-button').addEventListener('click', () => {
+      pi.createPayment(paymentData, paymentCallbacks)
+        .then(payment => {
+          alert('Payment initiated!');
+          console.log(payment);
+        })
+        .catch(error => {
+          alert('Payment failed: ' + error);
+          console.error(error);
+        });
     });
   </script>
 </body>

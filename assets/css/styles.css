@@ -17,15 +17,20 @@ body::before {
   content: none;
 }
 
+/* Update service card colors to match the screenshot */
 .group {
-  background: linear-gradient(135deg, rgba(124, 58, 237, 0.9), rgba(147, 51, 234, 0.9)); /* Updated to theme purple */
+  background: linear-gradient(135deg, #7e22ce, #9333ea); /* Updated to match the purple gradient */
   color: #ffffff; /* Bright text for better contrast */
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
   transition: transform 0.3s ease, box-shadow 0.3s ease;
+  transform: scale(1); /* Reset scale to default */
 }
 .group:hover {
-  transform: scale(1.1);
-  box-shadow: 0 0 20px rgba(147, 51, 234, 0.8), 0 0 10px rgba(124, 58, 237, 0.6); /* Updated hover effect to match theme purple */
+  transform: scale(1.1); /* Slightly enlarge on hover */
+  box-shadow: 0 0 20px rgba(147, 51, 234, 0.8), 0 0 10px rgba(124, 58, 237, 0.6); /* Updated hover effect */
+}
+.group:active {
+  transform: scale(1); /* Reset scale when clicked */
 }
 .group h4 {
   color: #000000; /* Black text for titles */
@@ -404,11 +409,6 @@ img, video {
   -webkit-optimize-contrast: high;
 }
 
-/* Lazy loading is handled via HTML attributes */
-img, video, model-viewer {
-  /* Removed invalid CSS property */
-}
-
 /* Add futuristic animations */
 .chat-container {
   animation: fadeInUp 1.5s ease-in-out;
@@ -465,4 +465,24 @@ img, video, model-viewer {
 button:hover {
   transform: scale(1.1);
   box-shadow: 0 0 20px rgba(124, 58, 237, 0.8), 0 0 10px rgba(37, 99, 235, 0.6);
+}
+
+/* Only apply contrast fix to .policy-page and its content */
+.policy-page, .policy-page .max-w-3xl {
+  color: #222 !important;
+  background: #fff !important;
+}
+.policy-page h1, .policy-page h2, .policy-page h3, .policy-page h4, .policy-page h5, .policy-page h6 {
+  color: #1a1a1a !important;
+}
+.policy-page a {
+  color: #2563eb !important;
+}
+.policy-page ul, .policy-page p, .policy-page li {
+  color: #333 !important;
+}
+@media (max-width: 768px) {
+  .policy-page .max-w-3xl {
+    padding: 10px !important;
+  }
 }
