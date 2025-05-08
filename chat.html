@@ -214,6 +214,7 @@
   <div id="ai-tech-animation"></div>
   <div class="chat-container">
     <div class="chat-header">Chat with TumzyBot</div>
+    <div id="subscription-status" class="text-center mb-2 text-sm text-gray-300"></div>
     <div id="chat-window" class="chat-window">
       <div class="chat-message bot">Hello! How can I assist you with TumzyTech today?</div>
     </div>
@@ -221,7 +222,10 @@
       <input type="text" id="user-input" placeholder="Type your message...">
       <button type="submit">Send</button>
     </form>
-    <button id="pay-button" class="px-4 py-2 bg-blue-500 text-white rounded mt-2">Pay with Pi</button>
+    <div class="flex justify-between mt-2">
+      <button id="pay-button" class="px-4 py-2 bg-blue-500 text-white rounded">Subscribe with Pi</button>
+      <div id="trial-counter" class="text-sm text-gray-300 self-center"></div>
+    </div>
   </div>
   <script>
     // Lazy load the video background
@@ -253,6 +257,29 @@
       chatWindow.appendChild(botMessageDiv);
     }
 
+    // Update subscription and trial status in UI
+    function updateSubscriptionUI(data) {
+      const subscriptionStatus = document.getElementById('subscription-status');
+      const trialCounter = document.getElementById('trial-counter');
+      
+      if (data.subscriptionActive) {
+        // User has active subscription
+        const endDate = new Date(data.subscriptionEndDate);
+        subscriptionStatus.textContent = `Premium subscription active until ${endDate.toLocaleDateString()}`;
+        subscriptionStatus.classList.add('text-green-400');
+        trialCounter.textContent = '';
+      } else if (data.trialRemaining > 0) {
+        // User has trial messages left
+        subscriptionStatus.textContent = '';
+        trialCounter.textContent = `${data.trialRemaining} free messages left`;
+      } else {
+        // No subscription and no trial messages
+        subscriptionStatus.textContent = 'Free trial ended. Subscribe to continue.';
+        subscriptionStatus.classList.add('text-yellow-400');
+        trialCounter.textContent = '';
+      }
+    }
+    
     chatForm.addEventListener('submit', async (e) => {
       e.preventDefault();
       const message = userInput.value.trim();
@@ -263,87 +290,336 @@
         chatWindow.appendChild(userMessageDiv);
         userInput.value = '';
         chatWindow.scrollTop = chatWindow.scrollHeight;
+        
+        // Show typing indicator
+        const typingDiv = document.createElement('div');
+        typingDiv.className = 'chat-message bot';
+        typingDiv.innerHTML = '<div class="typing-indicator"><span></span><span></span><span></span></div>';
+        typingDiv.style.padding = '10px';
+        chatWindow.appendChild(typingDiv);
+        chatWindow.scrollTop = chatWindow.scrollHeight;
+        
         try {
           const response = await fetch('/api/services/chatbot', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ message }),
+            headers: { 
+              'Content-Type': 'application/json',
+              'Authorization': window.piAccessToken ? `Bearer ${window.piAccessToken}` : ''
+            },
+            body: JSON.stringify({ 
+              message,
+              username: window.piUser ? window.piUser.username : null
+            }),
           });
-          const data = await response.json();
-          const botMessageDiv = document.createElement('div');
-          botMessageDiv.className = 'chat-message bot';
-          botMessageDiv.textContent = data.response;
-          chatWindow.appendChild(botMessageDiv);
+          
+          // Remove typing indicator
+          chatWindow.removeChild(typingDiv);
+          
+          if (response.status === 402) {
+            // Payment required
+            const data = await response.json();
+            const botMessageDiv = document.createElement('div');
+            botMessageDiv.className = 'chat-message bot';
+            botMessageDiv.innerHTML = `${data.message} <button id="subscribe-now" class="bg-green-500 text-white px-2 py-1 rounded text-xs ml-2">Subscribe Now</button>`;
+            chatWindow.appendChild(botMessageDiv);
+            
+            // Add event listener to the subscribe button
+            document.getElementById('subscribe-now').addEventListener('click', () => {
+              createPayment('chatSubscription');
+            });
+          } else {
+            const data = await response.json();
+            const botMessageDiv = document.createElement('div');
+            botMessageDiv.className = 'chat-message bot';
+            botMessageDiv.textContent = data.response;
+            chatWindow.appendChild(botMessageDiv);
+            
+            // Update subscription and trial status if available
+            if (data.trialRemaining !== undefined || data.subscriptionActive !== undefined) {
+              updateSubscriptionUI(data);
+            }
+          }
+          
           chatWindow.scrollTop = chatWindow.scrollHeight;
         } catch (error) {
           console.error('Error communicating with chatbot API:', error);
+          
+          // Remove typing indicator
+          chatWindow.removeChild(typingDiv);
+          
+          // Show error message
+          const errorDiv = document.createElement('div');
+          errorDiv.className = 'chat-message bot';
+          errorDiv.textContent = 'Sorry, there was an error connecting to the chatbot. Please try again later.';
+          chatWindow.appendChild(errorDiv);
+          chatWindow.scrollTop = chatWindow.scrollHeight;
         }
       }
     });
+    
+    // Add typing indicator styles
+    const style = document.createElement('style');
+    style.textContent = `
+      .typing-indicator {
+        display: flex;
+        align-items: center;
+      }
+      .typing-indicator span {
+        height: 8px;
+        width: 8px;
+        background: #fff;
+        border-radius: 50%;
+        display: inline-block;
+        margin: 0 2px;
+        animation: typing 1.5s infinite ease-in-out;
+      }
+      .typing-indicator span:nth-child(2) {
+        animation-delay: 0.2s;
+      }
+      .typing-indicator span:nth-child(3) {
+        animation-delay: 0.4s;
+      }
+      @keyframes typing {
+        0%, 100% { transform: translateY(0); }
+        50% { transform: translateY(-10px); }
+      }
+    `;
+    document.head.appendChild(style);
   </script>
   <script>
-    // Initialize Pi Network SDK in sandbox mode
+    // Initialize Pi Network SDK
     const pi = window.Pi;
-    pi.init({
+    const piConfig = {
       version: "2.0",
-      sandbox: true, // Enable sandbox mode for testnet
-      onIncompletePaymentFound: (payment) => {
-        console.log("Incomplete payment found:", payment);
-      },
-    });
-
-    // Authenticate with Pi Network with required scopes
-    const scopes = ['username', 'payments'];
-    pi.authenticate(scopes, (payment) => {
-      console.log('Incomplete payment found:', payment);
-    }).then(auth => {
-      window.piUser = auth.user;
-      window.piAccessToken = auth.accessToken;
-      // Optionally display username in UI
-      // document.getElementById('auth-status').textContent = `Welcome, ${auth.user.username}`;
-    }).catch(error => {
-      console.error('Pi authentication failed:', error);
-    });
-
-    // Pi Payment Integration with recommended callbacks
-    const paymentData = {
-      amount: 5,
-      memo: 'Monthly subscription for TumzyTech',
-      metadata: { service: 'Chatbot Subscription', period: '1 month' },
-      to: 'GD5XOGYAAVODXKBIJXFGZUQXA3VDHYT5NX2OIUFG4IRDPL3SLXH5O5KM'
+      sandbox: true, // Set to true for testing in sandbox mode
+      onIncompletePaymentFound: handleIncompletePayment
     };
-    const paymentCallbacks = {
-      onReadyForServerApproval: function(paymentId) {
-        fetch('/api/pi/approve', {
+    
+    pi.init(piConfig);
+    
+    // Handle incomplete payments
+    function handleIncompletePayment(payment) {
+      console.log("Incomplete payment found:", payment);
+      // Attempt to complete the payment
+      if (payment.status === 'created') {
+        approvePayment(payment.identifier);
+      } else if (payment.status === 'approved') {
+        completePayment(payment.identifier, payment.transaction && payment.transaction.txid);
+      }
+    }
+    
+    // Authenticate with Pi Network
+    async function authenticateWithPi() {
+      try {
+        const scopes = ['username', 'payments'];
+        const auth = await pi.authenticate(scopes, onIncompletePaymentFound);
+        window.piUser = auth.user;
+        window.piAccessToken = auth.accessToken;
+        
+        // Update UI with username
+        const chatHeader = document.querySelector('.chat-header');
+        chatHeader.textContent = `Chat with TumzyBot (${auth.user.username})`;
+        
+        // Check subscription status
+        checkSubscriptionStatus();
+        
+        return auth;
+      } catch (error) {
+        console.error('Pi authentication failed:', error);
+        return null;
+      }
+    }
+    
+    // Check user's subscription status
+    async function checkSubscriptionStatus() {
+      try {
+        const response = await fetch('/api/pi/payment-history', {
+          headers: {
+            'Authorization': `Bearer ${window.piAccessToken}`
+          }
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+          const payButton = document.getElementById('pay-button');
+          
+          if (data.subscriptionActive) {
+            // User has an active subscription
+            const endDate = new Date(data.subscriptionEndDate);
+            payButton.textContent = `Subscribed until ${endDate.toLocaleDateString()}`;
+            payButton.classList.add('bg-green-500');
+            payButton.classList.remove('bg-blue-500');
+          } else {
+            // User doesn't have an active subscription
+            payButton.textContent = 'Subscribe with Pi (5π/month)';
+          }
+        }
+      } catch (error) {
+        console.error('Error checking subscription status:', error);
+      }
+    }
+    
+    // Create payment with Pi
+    async function createPayment(paymentType = 'chatSubscription') {
+      try {
+        // Get payment data from server
+        const response = await fetch('/api/pi/create-payment', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${window.piAccessToken}`
+          },
+          body: JSON.stringify({
+            paymentType,
+            uid: window.piUser ? window.piUser.uid : null
+          })
+        });
+        
+        const data = await response.json();
+        
+        if (!data.success) {
+          throw new Error(data.message || 'Failed to create payment');
+        }
+        
+        // Define payment callbacks
+        const paymentCallbacks = {
+          onReadyForServerApproval: approvePayment,
+          onReadyForServerCompletion: completePayment,
+          onCancel: function(paymentId) {
+            console.log('Payment cancelled:', paymentId);
+            showPaymentStatus('Payment cancelled', 'error');
+          },
+          onError: function(error, payment) {
+            console.error('Payment error:', error, payment);
+            showPaymentStatus(`Payment error: ${error}`, 'error');
+          }
+        };
+        
+        // Create payment with Pi SDK
+        const payment = await pi.createPayment(data.paymentData, paymentCallbacks);
+        console.log('Payment created:', payment);
+        showPaymentStatus('Payment initiated!', 'success');
+        
+        return payment;
+      } catch (error) {
+        console.error('Error creating payment:', error);
+        showPaymentStatus(`Payment failed: ${error.message}`, 'error');
+        throw error;
+      }
+    }
+    
+    // Approve payment with server
+    async function approvePayment(paymentId) {
+      try {
+        const response = await fetch('/api/pi/approve', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${window.piAccessToken}`
+          },
           body: JSON.stringify({ paymentId })
         });
-      },
-      onReadyForServerCompletion: function(paymentId, txid) {
-        fetch('/api/pi/complete', {
+        
+        const data = await response.json();
+        
+        if (!data.success) {
+          throw new Error(data.message || 'Failed to approve payment');
+        }
+        
+        console.log('Payment approved:', paymentId);
+        showPaymentStatus('Payment approved', 'info');
+        
+        return data;
+      } catch (error) {
+        console.error('Error approving payment:', error);
+        showPaymentStatus(`Approval failed: ${error.message}`, 'error');
+        throw error;
+      }
+    }
+    
+    // Complete payment with server
+    async function completePayment(paymentId, txid) {
+      try {
+        const response = await fetch('/api/pi/complete', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${window.piAccessToken}`
+          },
           body: JSON.stringify({ paymentId, txid })
         });
-      },
-      onCancel: function(paymentId) {
-        alert('Payment cancelled.');
-      },
-      onError: function(error, payment) {
-        alert('Payment error: ' + error);
+        
+        const data = await response.json();
+        
+        if (!data.success) {
+          throw new Error(data.message || 'Failed to complete payment');
+        }
+        
+        console.log('Payment completed:', paymentId);
+        showPaymentStatus('Payment completed successfully!', 'success');
+        
+        // Update subscription status
+        checkSubscriptionStatus();
+        
+        return data;
+      } catch (error) {
+        console.error('Error completing payment:', error);
+        showPaymentStatus(`Completion failed: ${error.message}`, 'error');
+        throw error;
       }
-    };
+    }
+    
+    // Show payment status to user
+    function showPaymentStatus(message, type = 'info') {
+      // Create status element if it doesn't exist
+      let statusElement = document.getElementById('payment-status');
+      
+      if (!statusElement) {
+        statusElement = document.createElement('div');
+        statusElement.id = 'payment-status';
+        statusElement.className = 'mt-4 p-2 rounded text-center';
+        document.querySelector('.chat-container').appendChild(statusElement);
+      }
+      
+      // Set message and style based on type
+      statusElement.textContent = message;
+      
+      // Clear existing classes
+      statusElement.className = 'mt-4 p-2 rounded text-center';
+      
+      // Add class based on type
+      switch (type) {
+        case 'success':
+          statusElement.classList.add('bg-green-500', 'text-white');
+          break;
+        case 'error':
+          statusElement.classList.add('bg-red-500', 'text-white');
+          break;
+        case 'info':
+        default:
+          statusElement.classList.add('bg-blue-500', 'text-white');
+          break;
+      }
+      
+      // Auto-hide after 5 seconds
+      setTimeout(() => {
+        statusElement.style.opacity = '0';
+        statusElement.style.transition = 'opacity 1s';
+        
+        setTimeout(() => {
+          statusElement.style.display = 'none';
+        }, 1000);
+      }, 5000);
+    }
+    
+    // Initialize Pi authentication on page load
+    document.addEventListener('DOMContentLoaded', authenticateWithPi);
+    
+    // Add event listener to payment button
     document.getElementById('pay-button').addEventListener('click', () => {
-      pi.createPayment(paymentData, paymentCallbacks)
-        .then(payment => {
-          alert('Payment initiated!');
-          console.log(payment);
-        })
-        .catch(error => {
-          alert('Payment failed: ' + error);
-          console.error(error);
-        });
+      createPayment('chatSubscription')
+        .catch(error => console.error('Payment flow error:', error));
     });
   </script>
 </body>

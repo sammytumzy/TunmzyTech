@@ -511,45 +511,152 @@
   <script>
     // Initialize Pi Network SDK
     const pi = window.Pi;
-    pi.init({
+    const piConfig = {
       version: "2.0",
-      onIncompletePaymentFound: (payment) => {
-        console.log("Incomplete payment found:", payment);
-      },
-    });
-
-    // Authenticate user with Pi Network
+      sandbox: true, // Set to true for testing in sandbox mode
+      onIncompletePaymentFound: handleIncompletePayment
+    };
+    
+    pi.init(piConfig);
+    
+    // Handle incomplete payments
+    function handleIncompletePayment(payment) {
+      console.log("Incomplete payment found:", payment);
+      // Attempt to complete the payment
+      if (payment.status === 'created') {
+        approvePayment(payment.identifier);
+      } else if (payment.status === 'approved') {
+        completePayment(payment.identifier, payment.transaction && payment.transaction.txid);
+      }
+    }
+    
+    // Authenticate with Pi Network
     async function authenticateWithPi() {
       try {
-        const scopes = ["username", "payments"];
-        const user = await pi.authenticate(scopes, onIncompletePaymentFound);
-        console.log("Authenticated user:", user);
-        document.getElementById("auth-status").textContent = `Welcome, ${user.username}`;
+        const scopes = ['username', 'payments'];
+        const auth = await pi.authenticate(scopes, onIncompletePaymentFound);
+        window.piUser = auth.user;
+        window.piAccessToken = auth.accessToken;
+        
+        // Update UI with username if auth-status element exists
+        const authStatus = document.getElementById("auth-status");
+        if (authStatus) {
+          authStatus.textContent = `Welcome, ${auth.user.username}`;
+        }
+        
+        console.log("Authenticated with Pi Network:", auth.user.username);
+        return auth;
       } catch (error) {
-        console.error("Authentication failed:", error);
+        console.error('Pi authentication failed:', error);
+        return null;
       }
     }
-
+    
+    // Create payment with Pi
+    async function createPayment(paymentType = 'chatSubscription') {
+      try {
+        // Get payment data from server
+        const response = await fetch('/api/pi/create-payment', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${window.piAccessToken}`
+          },
+          body: JSON.stringify({
+            paymentType,
+            uid: window.piUser ? window.piUser.uid : null
+          })
+        });
+        
+        const data = await response.json();
+        
+        if (!data.success) {
+          throw new Error(data.message || 'Failed to create payment');
+        }
+        
+        // Define payment callbacks
+        const paymentCallbacks = {
+          onReadyForServerApproval: approvePayment,
+          onReadyForServerCompletion: completePayment,
+          onCancel: function(paymentId) {
+            console.log('Payment cancelled:', paymentId);
+            alert('Payment cancelled.');
+          },
+          onError: function(error, payment) {
+            console.error('Payment error:', error, payment);
+            alert(`Payment error: ${error}`);
+          }
+        };
+        
+        // Create payment with Pi SDK
+        const payment = await pi.createPayment(data.paymentData, paymentCallbacks);
+        console.log('Payment created:', payment);
+        alert('Payment initiated!');
+        
+        return payment;
+      } catch (error) {
+        console.error('Error creating payment:', error);
+        alert(`Payment failed: ${error.message}`);
+        throw error;
+      }
+    }
+    
+    // Approve payment with server
+    async function approvePayment(paymentId) {
+      try {
+        const response = await fetch('/api/pi/approve', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${window.piAccessToken}`
+          },
+          body: JSON.stringify({ paymentId })
+        });
+        
+        const data = await response.json();
+        
+        if (!data.success) {
+          throw new Error(data.message || 'Failed to approve payment');
+        }
+        
+        console.log('Payment approved:', paymentId);
+        return data;
+      } catch (error) {
+        console.error('Error approving payment:', error);
+        throw error;
+      }
+    }
+    
+    // Complete payment with server
+    async function completePayment(paymentId, txid) {
+      try {
+        const response = await fetch('/api/pi/complete', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${window.piAccessToken}`
+          },
+          body: JSON.stringify({ paymentId, txid })
+        });
+        
+        const data = await response.json();
+        
+        if (!data.success) {
+          throw new Error(data.message || 'Failed to complete payment');
+        }
+        
+        console.log('Payment completed:', paymentId);
+        alert('Payment completed successfully!');
+        
+        return data;
+      } catch (error) {
+        console.error('Error completing payment:', error);
+        throw error;
+      }
+    }
+    
     // Call authentication on page load
     document.addEventListener("DOMContentLoaded", authenticateWithPi);
-  </script>
-  <script>
-    // Function to initiate Pi payment
-    async function initiatePayment(amount, memo, metadata) {
-      try {
-        const payment = await pi.createPayment({
-          amount,
-          memo,
-          metadata,
-        });
-
-        console.log('Payment initiated:', payment);
-        alert('Payment successful!');
-      } catch (error) {
-        console.error('Payment failed:', error);
-        alert('Payment failed. Please try again.');
-      }
-    }
   </script>
 </head>
 <body class="relative text-white min-h-screen">
