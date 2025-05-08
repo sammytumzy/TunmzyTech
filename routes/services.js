@@ -21,68 +21,34 @@ router.get('/', ensureAuthenticated, (req, res) => {
   res.json({ message: 'Welcome to the services API!' });
 });
 
-// Chatbot API endpoint
-router.post('/chatbot', (req, res) => {
+const GEMINI_API_KEY = 'AIzaSyDvAkL_FYVFLXdBGnQSk3lrNpLrLJoKoCw';
+
+// Chatbot API endpoint (Gemini only, cleaned up)
+router.post('/chatbot', async (req, res) => {
   const { message } = req.body;
-
-  // Simulate chatbot response
-  const botResponse = `You said: ${message}`;
-
-  res.json({ response: botResponse });
-});
-
-// Payment API endpoint
-router.post('/payment', async (req, res) => {
-  const { amount, memo, metadata } = req.body;
-
   try {
-    const payment = await pi.createPayment({
-      amount,
-      memo,
-      metadata,
-    });
-
-    res.json({ success: true, payment });
+    const response = await axios.post(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-pro:generateContent?key=${GEMINI_API_KEY}`,
+      {
+        contents: [
+          {
+            parts: [{ text: message }]
+          }
+        ]
+      },
+      {
+        headers: { 'Content-Type': 'application/json' }
+      }
+    );
+    const aiReply = response.data.candidates?.[0]?.content?.parts?.[0]?.text || 'Sorry, I could not generate a response.';
+    res.json({ response: aiReply });
   } catch (error) {
-    console.error('Payment error:', error);
-    res.status(500).json({ success: false, error: 'Payment failed' });
-  }
-});
-
-// Pi Network payment approval endpoint
-router.post('/pi/approve', async (req, res) => {
-  const { paymentId } = req.body;
-  const payment = await verifyPaymentWithPi(paymentId);
-  if (payment && payment.status === 'pending') {
-    // Approve payment
-    try {
-      await axios.post(`https://api.minepi.com/v2/payments/${paymentId}/approve`, {}, {
-        headers: { 'Authorization': `Key ${process.env.PI_API_KEY}` }
-      });
-      return res.json({ success: true });
-    } catch (err) {
-      return res.status(500).json({ success: false, error: 'Failed to approve payment' });
+    if (error.response) {
+      console.error('Gemini API error:', error.response.status, error.response.data);
+      res.json({ response: `Gemini API error: ${error.response.status} - ${JSON.stringify(error.response.data)}` });
+    } else {
+      console.error('Gemini API error:', error.message);
+      res.json({ response: 'Sorry, there was an error connecting to Gemini AI.' });
     }
   }
-  res.status(400).json({ success: false, error: 'Invalid or non-pending payment' });
 });
-
-// Pi Network payment completion endpoint
-router.post('/pi/complete', async (req, res) => {
-  const { paymentId, txid } = req.body;
-  const payment = await verifyPaymentWithPi(paymentId);
-  if (payment && payment.status === 'pending' && payment.transaction && payment.transaction.txid === txid) {
-    // Complete payment
-    try {
-      await axios.post(`https://api.minepi.com/v2/payments/${paymentId}/complete`, {}, {
-        headers: { 'Authorization': `Key ${process.env.PI_API_KEY}` }
-      });
-      return res.json({ success: true });
-    } catch (err) {
-      return res.status(500).json({ success: false, error: 'Failed to complete payment' });
-    }
-  }
-  res.status(400).json({ success: false, error: 'Invalid payment or txid' });
-});
-
-module.exports = router;
