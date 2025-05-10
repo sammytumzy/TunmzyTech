@@ -388,13 +388,25 @@
   </script>  <script>
     // Initialize Pi Network SDK
     const pi = window.Pi;
+    
+    // Make sure Pi SDK is available
+    if (!pi) {
+      console.error('Pi SDK not found! Make sure you are running in the Pi Browser.');
+      alert('Pi SDK not found! Please make sure you are running this app in the Pi Browser.');
+    }
+    
     const piConfig = {
       version: "2.0",
       sandbox: true, // Set to true for testing in sandbox mode
       onIncompletePaymentFound: handleIncompletePayment
     };
     
-    pi.init(piConfig);
+    try {
+      pi.init(piConfig);
+      console.log('Pi SDK initialized successfully');
+    } catch (e) {
+      console.error('Failed to initialize Pi SDK:', e);
+    }
     
     // Handle incomplete payments
     function handleIncompletePayment(payment) {
@@ -444,13 +456,12 @@
         }, 1000);
       }, 5000);
     }
-    
-    // Handle Pi payments with simplified approach
+      // Handle Pi payments with simplified approach
     async function handlePiPayment() {
       try {
         showPaymentStatus('Initializing payment...', 'info');
         
-        // 1. Authenticate user
+        // 1. Authenticate user - in Pi Sandbox this should be automatic
         const auth = await pi.authenticate(['payments'], handleIncompletePayment);
         if (!auth) {
           throw new Error('Authentication failed');
@@ -464,19 +475,22 @@
         const chatHeader = document.querySelector('.chat-header');
         chatHeader.textContent = `Chat with TumzyBot (${auth.user.username})`;
         
-        // 2. Create payment directly with Pi SDK
-        const payment = await pi.createPayment({
+        // 2. Create payment with callbacks defined
+        const paymentData = {
           amount: 0.5, // 0.5 Pi
           memo: "TumzyTech AI Tool Access",
           metadata: { productId: "ai-tools-access" }
-        }, {
-          // These callbacks handle the payment flow directly with Pi
+        };
+        
+        const callbacks = {
           onReadyForServerApproval: function(paymentId) {
             console.log('Payment ready for approval:', paymentId);
             showPaymentStatus('Payment approved!', 'success');
+            // In Pi Sandbox this is a simulation, so we'll accept it automatically
+            return true;
           },
           onReadyForServerCompletion: function(paymentId, txid) {
-            console.log('Payment completed:', paymentId, txid);
+            console.log('Payment ready for completion:', paymentId, txid);
             showPaymentStatus('Payment completed successfully!', 'success');
             
             // Update button to show subscribed status
@@ -486,6 +500,7 @@
             payButton.textContent = `Subscribed until ${endDate.toLocaleDateString()}`;
             payButton.classList.add('bg-green-500');
             payButton.classList.remove('bg-blue-500');
+            return true;
           },
           onCancel: function(paymentId) {
             console.log('Payment cancelled:', paymentId);
@@ -495,31 +510,63 @@
             console.error('Payment error:', error, payment);
             showPaymentStatus(`Payment error: ${error}`, 'error');
           }
-        });
+        };
         
+        showPaymentStatus('Creating payment...', 'info');
+        console.log('Creating Pi payment with data:', paymentData);
+        
+        // Create payment with Pi SDK
+        const payment = await pi.createPayment(paymentData, callbacks);
         console.log('Payment created:', payment);
-        
-      } catch (error) {
+          } catch (error) {
         console.error('Payment process failed:', error);
         showPaymentStatus(`Payment failed: ${error.message}`, 'error');
+        
+        // Show more debug info for sandbox testing
+        console.log('Debug info:');
+        console.log('Pi SDK version:', pi.version);
+        console.log('In Sandbox mode:', piConfig.sandbox);
+        console.log('User agent:', navigator.userAgent);
+        console.log('Error stack:', error.stack);
       }
+    }
+    
+    // Function to check if we're running in Pi Browser
+    function isRunningInPiBrowser() {
+      const userAgent = navigator.userAgent.toLowerCase();
+      return userAgent.includes('pi-browser') || 
+             window.location.href.includes('sandbox.minepi.com') ||
+             window.location.href.includes('app.pi');
     }
     
     // Add event listener to payment button
     document.addEventListener('DOMContentLoaded', () => {
       const payButton = document.getElementById('pay-button');
       if (payButton) {
-        payButton.addEventListener('click', handlePiPayment);
+        payButton.addEventListener('click', () => {
+          if (!isRunningInPiBrowser()) {
+            showPaymentStatus('Please open this page in the Pi Browser app for payments to work correctly', 'error');
+            console.warn('Not running in Pi Browser. Payments may not work correctly.');
+          } else {
+            handlePiPayment();
+          }
+        });
         
-        // Initial authentication to show username
-        pi.authenticate(['username'])
-          .then(auth => {
-            if (auth && auth.user) {
-              const chatHeader = document.querySelector('.chat-header');
-              chatHeader.textContent = `Chat with TumzyBot (${auth.user.username})`;
-            }
-          })
-          .catch(err => console.error('Auth error:', err));
+        // Initial authentication to show username if in Pi Browser
+        if (isRunningInPiBrowser()) {
+          pi.authenticate(['username'])
+            .then(auth => {
+              if (auth && auth.user) {
+                const chatHeader = document.querySelector('.chat-header');
+                chatHeader.textContent = `Chat with TumzyBot (${auth.user.username})`;
+                console.log('Successfully authenticated with Pi:', auth.user);
+              }
+            })
+            .catch(err => {
+              console.error('Auth error:', err);
+              showPaymentStatus('Authentication error. Please try again.', 'error');
+            });
+        }
       }
     });
   </script>
