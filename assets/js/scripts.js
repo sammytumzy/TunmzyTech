@@ -14,11 +14,12 @@ document.addEventListener("mousemove", (event) => {
 });
 
 // Sign-in page open and close animation
-const signinButton = document.getElementById('signinButton');
+// Use a different variable name to avoid conflicts
+const signinButtonElement = document.getElementById('signinButton');
 const signinPage = document.getElementById('signinPage');
 const closeIcon = document.getElementById('closeIcon');
 
-signinButton?.addEventListener('click', function() {
+signinButtonElement?.addEventListener('click', function() {
     signinPage?.classList.remove('closeSignin');
     signinPage?.classList.add("openSignin");
 });
@@ -288,10 +289,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // Add error handling for 3D model loading
 const modelViewer = document.querySelector('model-viewer');
-modelViewer.addEventListener('error', (event) => {
-  console.error('Error loading 3D model:', event);
-  alert('The 3D model could not be loaded. Please check your internet connection or try again later.');
-});
+if (modelViewer) {
+  modelViewer.addEventListener('error', (event) => {
+    console.error('Error loading 3D model:', event);
+    alert('The 3D model could not be loaded. Please check your internet connection or try again later.');
+  });
+}
 
 // Pi Network Integration
 const Pi = window.Pi;

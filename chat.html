@@ -395,23 +395,22 @@
       alert('Pi SDK not found! Please make sure you are running this app in the Pi Browser.');
     }
     
+    // Define handleIncompletePayment before using it in the config
+    function handleIncompletePayment(payment) {
+      console.log("Incomplete payment found:", payment);
+      showPaymentStatus("Incomplete payment found. Please try again.", "info");
+    }
+    
     const piConfig = {
       version: "2.0",
       sandbox: true, // Set to true for testing in sandbox mode
-      onIncompletePaymentFound: handleIncompletePayment
-    };
+      onIncompletePaymentFound: handleIncompletePayment    };
     
     try {
       pi.init(piConfig);
       console.log('Pi SDK initialized successfully');
     } catch (e) {
       console.error('Failed to initialize Pi SDK:', e);
-    }
-    
-    // Handle incomplete payments
-    function handleIncompletePayment(payment) {
-      console.log("Incomplete payment found:", payment);
-      showPaymentStatus("Incomplete payment found. Please try again.", "info");
     }
     
     // Show payment status to user
@@ -465,7 +464,7 @@
         // 1. Authenticate user - in Pi Sandbox this should be automatic
         let auth;
         try {
-          auth = await pi.authenticate(['payments'], handleIncompletePayment);
+          auth = await pi.authenticate(['payments']);
           if (!auth) {
             throw new Error('Authentication failed');
           }
@@ -479,18 +478,12 @@
           chatHeader.textContent = `Chat with TumzyBot (${auth.user.username})`;
           
           showPaymentStatus('Authentication successful!', 'success');
-        } catch (authError) {
-          console.error("Authentication error:", authError);
-          showPaymentStatus('Authentication error: ' + authError.message, 'error');
-          throw authError;
-        }
-        
-        // 2. Create payment with direct approach for sandbox
-        console.log("Creating payment...");
-        showPaymentStatus('Creating payment...', 'info');
-        
-        // Create payment with direct Pi SDK call
-        try {
+          
+          // 2. Create payment with direct approach for sandbox
+          console.log("Creating payment...");
+          showPaymentStatus('Creating payment...', 'info');
+          
+          // Create payment with direct Pi SDK call
           const payment = await pi.createPayment({
             amount: 0.5,
             memo: "TumzyTech AI Tool Access",
@@ -522,13 +515,16 @@
             onError: function(error, payment) {
               console.error('Payment error:', error, payment);
               showPaymentStatus(`Payment error: ${error}`, 'error');
-            }          });
+            }
+          });
           
           console.log('Payment created:', payment);
-        } catch (paymentError) {
-          console.error('Payment creation error:', paymentError);
-          showPaymentStatus(`Payment creation failed: ${paymentError.message}`, 'error');
-          throw paymentError;
+          return payment;
+          
+        } catch (authError) {
+          console.error("Authentication error:", authError);
+          showPaymentStatus('Authentication error: ' + authError.message, 'error');
+          throw authError;
         }
         
       } catch (error) {
