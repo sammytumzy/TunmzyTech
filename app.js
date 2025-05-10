@@ -11,35 +11,15 @@ const PORT = process.env.PORT || 5000;
 // Middleware
 app.use(express.json());
 
+// Import routes
+const piRoutes = require('./routes/pi');
+
 // Serve static files from the root directory
 app.use(express.static(path.join(__dirname, 'public')));
 app.use('/assets', express.static(path.join(__dirname, 'assets')));
 
-// Pi Network payment endpoints
-app.post('/api/pi/create-payment', (req, res) => {
-  try {
-    const paymentData = {
-      amount: 0.5,
-      memo: "TumzyTech AI Tool Access",
-      metadata: { productId: "ai-tools-access" }
-    };
-    res.json({ success: true, paymentData });
-  } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
-  }
-});
-
-app.post('/api/pi/approve', (req, res) => {
-  const { paymentId } = req.body;
-  console.log('Payment approved:', paymentId);
-  res.json({ success: true });
-});
-
-app.post('/api/pi/complete', (req, res) => {
-  const { paymentId, txid } = req.body;
-  console.log('Payment completed:', paymentId, txid);
-  res.json({ success: true });
-});
+// Use Pi Network routes
+app.use('/api/pi', piRoutes);
 
 // Serve static files for the frontend
 app.get('/', (req, res) => {
@@ -53,10 +33,19 @@ app.get('/chat', (req, res) => {
 // Error handling middleware
 app.use((err, req, res, next) => {
   console.error(err.stack);
+  // Send JSON response instead of HTML error page
   res.status(500).json({
     success: false,
     message: 'Something went wrong!',
-    error: process.env.NODE_ENV === 'development' ? err.message : undefined
+    error: err.message // Including error message for both dev and prod for now
+  });
+});
+
+// Add catch-all route for API endpoints to avoid HTML responses for API routes
+app.use('/api/*', (req, res) => {
+  res.status(404).json({
+    success: false,
+    message: 'API endpoint not found'
   });
 });
 

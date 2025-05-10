@@ -9,9 +9,20 @@ const piAuth = {
   /**
    * Ensure user is authenticated with Pi Network
    * This middleware checks for a valid Pi Network access token in the Authorization header
-   */
-  ensurePiAuthenticated: async (req, res, next) => {
+   */  ensurePiAuthenticated: async (req, res, next) => {
     try {
+      // For development mode - bypass authentication check
+      // IMPORTANT: Remove this in production!
+      if (process.env.NODE_ENV !== 'production') {
+        req.user = {
+          piUsername: 'test_user',
+          name: 'Test User',
+          subscriptionActive: false,
+          subscriptionEndDate: null
+        };
+        return next();
+      }
+      
       // Get token from Authorization header (Bearer token)
       const token = req.headers.authorization?.split(' ')[1];
       
@@ -22,12 +33,8 @@ const piAuth = {
         });
       }
       
-      // Verify token with Pi Network (in a production app, you would validate with Pi Network API)
-      // For now, we'll just check if the token exists and find the user by piUsername
-      
       // Get user from database based on Pi username
       // In a real implementation, you would verify the token with Pi Network API
-      // and then find the user based on the verified username
       const user = await User.findOne({ piUsername: req.body.username || req.query.username });
       
       if (!user) {

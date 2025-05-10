@@ -385,8 +385,7 @@
       }
     `;
     document.head.appendChild(style);
-  </script>
-  <script>
+  </script>  <script>
     // Initialize Pi Network SDK
     const pi = window.Pi;
     const piConfig = {
@@ -400,174 +399,7 @@
     // Handle incomplete payments
     function handleIncompletePayment(payment) {
       console.log("Incomplete payment found:", payment);
-      // Attempt to complete the payment
-      if (payment.status === 'created') {
-        approvePayment(payment.identifier);
-      } else if (payment.status === 'approved') {
-        completePayment(payment.identifier, payment.transaction && payment.transaction.txid);
-      }
-    }
-    
-    // Authenticate with Pi Network
-    async function authenticateWithPi() {
-      try {
-        const scopes = ['username', 'payments'];
-        const auth = await pi.authenticate(scopes, onIncompletePaymentFound);
-        window.piUser = auth.user;
-        window.piAccessToken = auth.accessToken;
-        
-        // Update UI with username
-        const chatHeader = document.querySelector('.chat-header');
-        chatHeader.textContent = `Chat with TumzyBot (${auth.user.username})`;
-        
-        // Check subscription status
-        checkSubscriptionStatus();
-        
-        return auth;
-      } catch (error) {
-        console.error('Pi authentication failed:', error);
-        return null;
-      }
-    }
-    
-    // Check user's subscription status
-    async function checkSubscriptionStatus() {
-      try {
-        const response = await fetch('/api/pi/payment-history', {
-          headers: {
-            'Authorization': `Bearer ${window.piAccessToken}`
-          }
-        });
-        
-        const data = await response.json();
-        
-        if (data.success) {
-          const payButton = document.getElementById('pay-button');
-          
-          if (data.subscriptionActive) {
-            // User has an active subscription
-            const endDate = new Date(data.subscriptionEndDate);
-            payButton.textContent = `Subscribed until ${endDate.toLocaleDateString()}`;
-            payButton.classList.add('bg-green-500');
-            payButton.classList.remove('bg-blue-500');
-          } else {
-            // User doesn't have an active subscription
-            payButton.textContent = 'Subscribe with Pi (5π/month)';
-          }
-        }
-      } catch (error) {
-        console.error('Error checking subscription status:', error);
-      }
-    }
-    
-    // Create payment with Pi
-    async function createPayment(paymentType = 'chatSubscription') {
-      try {
-        // Get payment data from server
-        const response = await fetch('/api/pi/create-payment', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${window.piAccessToken}`
-          },
-          body: JSON.stringify({
-            paymentType,
-            uid: window.piUser ? window.piUser.uid : null
-          })
-        });
-        
-        const data = await response.json();
-        
-        if (!data.success) {
-          throw new Error(data.message || 'Failed to create payment');
-        }
-        
-        // Define payment callbacks
-        const paymentCallbacks = {
-          onReadyForServerApproval: approvePayment,
-          onReadyForServerCompletion: completePayment,
-          onCancel: function(paymentId) {
-            console.log('Payment cancelled:', paymentId);
-            showPaymentStatus('Payment cancelled', 'error');
-          },
-          onError: function(error, payment) {
-            console.error('Payment error:', error, payment);
-            showPaymentStatus(`Payment error: ${error}`, 'error');
-          }
-        };
-        
-        // Create payment with Pi SDK
-        const payment = await pi.createPayment(data.paymentData, paymentCallbacks);
-        console.log('Payment created:', payment);
-        showPaymentStatus('Payment initiated!', 'success');
-        
-        return payment;
-      } catch (error) {
-        console.error('Error creating payment:', error);
-        showPaymentStatus(`Payment failed: ${error.message}`, 'error');
-        throw error;
-      }
-    }
-    
-    // Approve payment with server
-    async function approvePayment(paymentId) {
-      try {
-        const response = await fetch('/api/pi/approve', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${window.piAccessToken}`
-          },
-          body: JSON.stringify({ paymentId })
-        });
-        
-        const data = await response.json();
-        
-        if (!data.success) {
-          throw new Error(data.message || 'Failed to approve payment');
-        }
-        
-        console.log('Payment approved:', paymentId);
-        showPaymentStatus('Payment approved', 'info');
-        
-        return data;
-      } catch (error) {
-        console.error('Error approving payment:', error);
-        showPaymentStatus(`Approval failed: ${error.message}`, 'error');
-        throw error;
-      }
-    }
-    
-    // Complete payment with server
-    async function completePayment(paymentId, txid) {
-      try {
-        const response = await fetch('/api/pi/complete', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${window.piAccessToken}`
-          },
-          body: JSON.stringify({ paymentId, txid })
-        });
-        
-        const data = await response.json();
-        
-        if (!data.success) {
-          throw new Error(data.message || 'Failed to complete payment');
-        }
-        
-        console.log('Payment completed:', paymentId);
-        showPaymentStatus('Payment completed successfully!', 'success');
-        
-        // Update subscription status
-        checkSubscriptionStatus();
-        
-        return data;
-      } catch (error) {
-        console.error('Error completing payment:', error);
-        showPaymentStatus(`Completion failed: ${error.message}`, 'error');
-        throw error;
-      }
+      showPaymentStatus("Incomplete payment found. Please try again.", "info");
     }
     
     // Show payment status to user
@@ -613,13 +445,82 @@
       }, 5000);
     }
     
-    // Initialize Pi authentication on page load
-    document.addEventListener('DOMContentLoaded', authenticateWithPi);
+    // Handle Pi payments with simplified approach
+    async function handlePiPayment() {
+      try {
+        showPaymentStatus('Initializing payment...', 'info');
+        
+        // 1. Authenticate user
+        const auth = await pi.authenticate(['payments'], handleIncompletePayment);
+        if (!auth) {
+          throw new Error('Authentication failed');
+        }
+        
+        // Store user info
+        window.piUser = auth.user;
+        console.log("Authenticated with Pi:", auth.user.username);
+        
+        // Update chat header with username
+        const chatHeader = document.querySelector('.chat-header');
+        chatHeader.textContent = `Chat with TumzyBot (${auth.user.username})`;
+        
+        // 2. Create payment directly with Pi SDK
+        const payment = await pi.createPayment({
+          amount: 0.5, // 0.5 Pi
+          memo: "TumzyTech AI Tool Access",
+          metadata: { productId: "ai-tools-access" }
+        }, {
+          // These callbacks handle the payment flow directly with Pi
+          onReadyForServerApproval: function(paymentId) {
+            console.log('Payment ready for approval:', paymentId);
+            showPaymentStatus('Payment approved!', 'success');
+          },
+          onReadyForServerCompletion: function(paymentId, txid) {
+            console.log('Payment completed:', paymentId, txid);
+            showPaymentStatus('Payment completed successfully!', 'success');
+            
+            // Update button to show subscribed status
+            const payButton = document.getElementById('pay-button');
+            const endDate = new Date();
+            endDate.setMonth(endDate.getMonth() + 1); // 1 month subscription
+            payButton.textContent = `Subscribed until ${endDate.toLocaleDateString()}`;
+            payButton.classList.add('bg-green-500');
+            payButton.classList.remove('bg-blue-500');
+          },
+          onCancel: function(paymentId) {
+            console.log('Payment cancelled:', paymentId);
+            showPaymentStatus('Payment cancelled', 'error');
+          },
+          onError: function(error, payment) {
+            console.error('Payment error:', error, payment);
+            showPaymentStatus(`Payment error: ${error}`, 'error');
+          }
+        });
+        
+        console.log('Payment created:', payment);
+        
+      } catch (error) {
+        console.error('Payment process failed:', error);
+        showPaymentStatus(`Payment failed: ${error.message}`, 'error');
+      }
+    }
     
     // Add event listener to payment button
-    document.getElementById('pay-button').addEventListener('click', () => {
-      createPayment('chatSubscription')
-        .catch(error => console.error('Payment flow error:', error));
+    document.addEventListener('DOMContentLoaded', () => {
+      const payButton = document.getElementById('pay-button');
+      if (payButton) {
+        payButton.addEventListener('click', handlePiPayment);
+        
+        // Initial authentication to show username
+        pi.authenticate(['username'])
+          .then(auth => {
+            if (auth && auth.user) {
+              const chatHeader = document.querySelector('.chat-header');
+              chatHeader.textContent = `Chat with TumzyBot (${auth.user.username})`;
+            }
+          })
+          .catch(err => console.error('Auth error:', err));
+      }
     });
   </script>
 </body>
