@@ -1,12 +1,6 @@
 const express = require('express');
-const mongoose = require('mongoose');
 const dotenv = require('dotenv');
-const passport = require('passport');
-const session = require('express-session');
 const path = require('path');
-const authRoutes = require('./routes/auth');
-const serviceRoutes = require('./routes/services');
-const piRoutes = require('./routes/pi');
 
 // Load environment variables
 dotenv.config();
@@ -14,46 +8,37 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// Import Passport.js configuration
-require('./config/passport');
-
 // Middleware
 app.use(express.json());
-app.use(session({
-  secret: process.env.SESSION_SECRET || 'your-secret-key',
-  resave: false,
-  saveUninitialized: false,
-  cookie: {
-    secure: process.env.NODE_ENV === 'production',
-    maxAge: 24 * 60 * 60 * 1000 // 24 hours
-  }
-}));
-app.use(passport.initialize());
-app.use(passport.session());
 
 // Serve static files from the root directory
 app.use(express.static(path.join(__dirname, 'public')));
 app.use('/assets', express.static(path.join(__dirname, 'assets')));
 
-// Routes
-app.use('/auth', authRoutes);
-app.use('/api/services', serviceRoutes);
-app.use('/api/pi', piRoutes);
+// Pi Network payment endpoints
+app.post('/api/pi/create-payment', (req, res) => {
+  try {
+    const paymentData = {
+      amount: 0.5,
+      memo: "TumzyTech AI Tool Access",
+      metadata: { productId: "ai-tools-access" }
+    };
+    res.json({ success: true, paymentData });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
 
-// Pi Network app metadata for ecosystem listing
-app.get('/.well-known/pi-app.json', (req, res) => {
-  res.json({
-    app_name: "TumzyTech",
-    app_description: "AI-driven services including content creation, graphics, market analysis, and financial assistance",
-    app_url: "https://tumzytech.com",
-    app_categories: ["AI & Machine Learning", "Productivity", "Finance"],
-    app_developer_name: "TumzyTech Team",
-    app_developer_email: "contact@tumzytech.com",
-    app_version: "1.0.0",
-    app_payment_options: ["subscription", "one-time"],
-    app_supported_platforms: ["web", "mobile"],
-    app_logo_url: "https://tumzytech.com/assets/pictures/favicon/android-chrome-512x512.png"
-  });
+app.post('/api/pi/approve', (req, res) => {
+  const { paymentId } = req.body;
+  console.log('Payment approved:', paymentId);
+  res.json({ success: true });
+});
+
+app.post('/api/pi/complete', (req, res) => {
+  const { paymentId, txid } = req.body;
+  console.log('Payment completed:', paymentId, txid);
+  res.json({ success: true });
 });
 
 // Serve static files for the frontend
@@ -78,7 +63,19 @@ app.use((err, req, res, next) => {
 // Database connection - temporarily disabled for development
 console.log('Running without MongoDB in development mode');
 
-// Start server
-app.listen(PORT, () => {
+// Start server with error handling
+const server = app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
+  console.log(`
+App URLs:
+- Main app: http://localhost:${PORT}
+- Pi Sandbox: https://sandbox.minepi.com/mobile-app-ui/app/tumzytech
+  `);
+}).on('error', (err) => {
+  if (err.code === 'EADDRINUSE') {
+    console.log(`Port ${PORT} is busy. Trying port ${PORT + 1}...`);
+    server.listen(PORT + 1);
+  } else {
+    console.error('Server error:', err);
+  }
 });
