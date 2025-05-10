@@ -20,16 +20,20 @@ require('./config/passport');
 // Middleware
 app.use(express.json());
 app.use(session({
-  secret: process.env.SESSION_SECRET || 'defaultsecret',
+  secret: process.env.SESSION_SECRET || 'your-secret-key',
   resave: false,
-  saveUninitialized: true,
-  cookie: { secure: process.env.NODE_ENV === 'production' }
+  saveUninitialized: false,
+  cookie: {
+    secure: process.env.NODE_ENV === 'production',
+    maxAge: 24 * 60 * 60 * 1000 // 24 hours
+  }
 }));
 app.use(passport.initialize());
 app.use(passport.session());
 
 // Serve static files from the root directory
-app.use(express.static(path.join(__dirname)));
+app.use(express.static(path.join(__dirname, 'public')));
+app.use('/assets', express.static(path.join(__dirname, 'assets')));
 
 // Routes
 app.use('/auth', authRoutes);
@@ -52,15 +56,29 @@ app.get('/.well-known/pi-app.json', (req, res) => {
   });
 });
 
-// Default route
+// Serve static files for the frontend
 app.get('/', (req, res) => {
-  res.send('Welcome to TumzyTech API!');
+  res.sendFile(path.join(__dirname, 'index.html'));
 });
 
-// Database connection
-mongoose.connect(process.env.MONGO_URI)
-  .then(() => console.log('Connected to MongoDB'))
-  .catch(err => console.error('MongoDB connection error:', err));
+app.get('/chat', (req, res) => {
+  res.sendFile(path.join(__dirname, 'chat.html'));
+});
+
+// Error handling middleware
+app.use((err, req, res, next) => {
+  console.error(err.stack);
+  res.status(500).json({
+    success: false,
+    message: 'Something went wrong!',
+    error: process.env.NODE_ENV === 'development' ? err.message : undefined
+  });
+});
+
+// Database connection - temporarily disabled for development
+console.log('Running without MongoDB in development mode');
 
 // Start server
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+app.listen(PORT, () => {
+  console.log(`Server is running on port ${PORT}`);
+});

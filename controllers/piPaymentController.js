@@ -196,6 +196,55 @@ const piPaymentController = {
       console.error('Error getting payment history:', error);
       res.status(500).json({ success: false, message: 'Error getting payment history' });
     }
+  },
+
+  /**
+   * Check payment status
+   * Determines user access based on payment status
+   */
+  checkPaymentStatus: async (req, res) => {
+    try {
+      const { paymentId } = req.params;
+      
+      if (!paymentId) {
+        return res.status(400).json({
+          success: false,
+          message: 'Payment ID is required'
+        });
+      }
+
+      const response = await fetch(`${piConfig.apiEndpoints.base}/v2/payments/${paymentId}`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Key ${process.env.PI_API_KEY}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      const paymentData = await response.json();
+
+      // If payment is completed, update user access
+      if (paymentData.status === 'completed') {
+        // Update user access in database
+        await User.findByIdAndUpdate(req.user._id, {
+          $set: {
+            subscriptionActive: true,
+            subscriptionEndDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) // 30 days from now
+          }
+        });
+      }
+
+      return res.json({
+        success: true,
+        payment: paymentData
+      });
+    } catch (error) {
+      console.error('Error checking payment status:', error);
+      return res.status(500).json({
+        success: false,
+        message: 'Failed to check payment status'
+      });
+    }
   }
 };
 

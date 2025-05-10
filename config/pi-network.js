@@ -3,20 +3,21 @@ const piConfig = {
   // Pi Network API endpoints
   apiEndpoints: {
     base: 'https://api.minepi.com',
-    payments: 'https://api.minepi.com/v2/payments',
-    completions: 'https://api.minepi.com/v2/payments/completions',
-    approvals: 'https://api.minepi.com/v2/payments/approvals',
+    sandbox: 'https://api.minepi.com/v2/payments',
+    mainnet: 'https://api.minepi.com/v2/payments',
+    completions: '/completions',
+    approvals: '/approvals',
   },
   
   // Pi payment options
   paymentOptions: {
     chatSubscription: {
-      amount: 5, // 5 Pi for monthly subscription
-      memo: 'TumzyTech Chatbot Monthly Subscription',
+      amount: 0.5, // 0.5 Pi for access
+      memo: 'TumzyTech AI Tool Access',
       metadata: { 
-        productId: 'chatbot-subscription',
-        period: '1 month',
-        features: 'Unlimited AI chatbot access'
+        productId: 'ai-tools-access',
+        type: 'service-access',
+        features: ['AI Chat', 'Content Generation', 'Image Generation']
       }
     },
     singleSession: {

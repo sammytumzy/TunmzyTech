@@ -17,9 +17,10 @@
   <!-- Include GLTFLoader -->
   <script src="https://cdn.jsdelivr.net/npm/three/examples/js/loaders/GLTFLoader.js"></script>
   <!-- Add Google Model Viewer Library -->
-  <script type="module" src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js"></script>
-  <!-- Pi Network SDK -->
+  <script type="module" src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js"></script>  <!-- Pi Network SDK -->
   <script src="https://sdk.minepi.com/pi-sdk.js"></script>
+  <!-- Add Pi Network status element -->
+  <div id="pi-status" class="hidden fixed top-4 right-4 bg-glass p-2 rounded-lg text-white"></div>
   <link rel="stylesheet" href="assets/css/styles.css">
   <script src="assets/js/scripts.js" defer></script>
   <link rel="icon" href="assets/pictures/favicon_io (4)/favicon.ico" type="image/x-icon">
@@ -508,16 +509,13 @@
 
     checkAuthStatus();
   </script>
-  <script>
-    // Initialize Pi Network SDK
+  <script>    // Initialize Pi Network SDK
     const pi = window.Pi;
-    const piConfig = {
+    pi.init({
       version: "2.0",
       sandbox: true, // Set to true for testing in sandbox mode
       onIncompletePaymentFound: handleIncompletePayment
-    };
-    
-    pi.init(piConfig);
+    });
     
     // Handle incomplete payments
     function handleIncompletePayment(payment) {
@@ -658,6 +656,167 @@
     // Call authentication on page load
     document.addEventListener("DOMContentLoaded", authenticateWithPi);
   </script>
+  <script>
+    // Initialize Pi Network SDK
+    const Pi = window.Pi;
+    const piConfig = {
+      version: "2.0",
+      sandbox: true, // Set to true for testing in sandbox mode
+      onIncompletePaymentFound: handleIncompletePayment
+    };
+    
+    pi.init(piConfig);
+    
+    // Handle incomplete payments
+    function handleIncompletePayment(payment) {
+      console.log("Incomplete payment found:", payment);
+      // Attempt to complete the payment
+      if (payment.status === 'created') {
+        approvePayment(payment.identifier);
+      } else if (payment.status === 'approved') {
+        completePayment(payment.identifier, payment.transaction && payment.transaction.txid);
+      }
+    }
+    
+    // Authenticate with Pi Network
+    async function authenticateWithPi() {
+      try {
+        const scopes = ['username', 'payments'];
+        const auth = await pi.authenticate(scopes, handleIncompletePayment);
+        window.piUser = auth.user;
+        window.piAccessToken = auth.accessToken;
+        
+        console.log("Authenticated with Pi Network:", auth.user.username);
+        return auth;
+      } catch (error) {
+        console.error('Pi authentication failed:', error);
+        return null;
+      }
+    }
+    
+    // Create payment with Pi
+    async function createPayment() {
+      try {
+        // Get payment data from server
+        const response = await fetch('/api/pi/create-payment', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${window.piAccessToken}`
+          },
+          body: JSON.stringify({
+            paymentType: 'chatSubscription',
+            uid: window.piUser ? window.piUser.uid : null
+          })
+        });
+        
+        const data = await response.json();
+        
+        if (!data.success) {
+          throw new Error(data.message || 'Failed to create payment');
+        }
+        
+        // Define payment callbacks
+        const paymentCallbacks = {
+          onReadyForServerApproval: approvePayment,
+          onReadyForServerCompletion: completePayment,
+          onCancel: function(paymentId) {
+            console.log('Payment cancelled:', paymentId);
+            alert('Payment cancelled.');
+          },
+          onError: function(error, payment) {
+            console.error('Payment error:', error, payment);
+            alert(`Payment error: ${error}`);
+          }
+        };
+        
+        // Create payment with Pi SDK
+        const payment = await pi.createPayment(data.paymentData, paymentCallbacks);
+        console.log('Payment created:', payment);
+        alert('Payment initiated!');
+        
+        return payment;
+      } catch (error) {
+        console.error('Error creating payment:', error);
+        alert(`Payment failed: ${error.message}`);
+        throw error;
+      }
+    }
+    
+    // Approve payment with server
+    async function approvePayment(paymentId) {
+      try {
+        const response = await fetch('/api/pi/approve', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${window.piAccessToken}`
+          },
+          body: JSON.stringify({ paymentId })
+        });
+        
+        const data = await response.json();
+        
+        if (!data.success) {
+          throw new Error(data.message || 'Failed to approve payment');
+        }
+        
+        console.log('Payment approved:', paymentId);
+        return data;
+      } catch (error) {
+        console.error('Error approving payment:', error);
+        throw error;
+      }
+    }
+    
+    // Complete payment with server
+    async function completePayment(paymentId, txid) {
+      try {
+        const response = await fetch('/api/pi/complete', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${window.piAccessToken}`
+          },
+          body: JSON.stringify({ paymentId, txid })
+        });
+        
+        const data = await response.json();
+        
+        if (!data.success) {
+          throw new Error(data.message || 'Failed to complete payment');
+        }
+        
+        console.log('Payment completed:', paymentId);
+        alert('Payment completed successfully!');
+        
+        return data;
+      } catch (error) {
+        console.error('Error completing payment:', error);
+        throw error;
+      }
+    }
+
+    // Add event listener for payment button
+    document.getElementById('payWithPi').addEventListener('click', async () => {
+      try {
+        // First authenticate
+        const auth = await authenticateWithPi();
+        if (!auth) {
+          throw new Error('Authentication failed');
+        }
+        
+        // Then create payment
+        await createPayment();
+      } catch (error) {
+        console.error('Payment process failed:', error);
+        alert('Payment process failed: ' + error.message);
+      }
+    });
+
+    // Call authentication on page load
+    document.addEventListener('DOMContentLoaded', authenticateWithPi);
+  </script>
 </head>
 <body class="relative text-white min-h-screen">
   <!-- Background Overlay -->
@@ -767,8 +926,13 @@
         <!-- Service Card -->
         <a href="chat.html" class="relative z-10 bg-glass p-8 rounded-3xl shadow-lg group transform transition duration-300 hover:-translate-y-3 hover:shadow-xl">
           <span class="block text-cyan-400 text-4xl mb-3"><i class="fas fa-robot"></i></span>
-          <h3 class="font-bold mb-2">AI-Driven Content Creation</h3>
-          <p class="text-sm text-gray-300 mb-3">Generate text, images, and multimedia at scale. Powered by advanced generative models tailored to your audience.</p>
+          <h3 class="font-bold mb-2">AI-Driven Content Creation</h3>          <p class="text-sm text-gray-300 mb-3">Generate text, images, and multimedia at scale. Powered by advanced generative models tailored to your audience.</p>
+          <div class="flex flex-col items-center gap-2">
+            <button id="payWithPi" class="mt-4 px-6 py-2 animated-gradient rounded-xl font-bold shadow-lg hover:scale-105 transition transform">
+              <i class="fas fa-coins mr-2"></i>Subscribe with Pi
+            </button>
+            <span class="text-xs text-gray-400">0.5 π for full access</span>
+          </div>
         </a>
         <a href="chat.html" class="relative z-10 bg-glass p-8 rounded-3xl shadow-lg group transform transition duration-300 hover:-translate-y-3 hover:shadow-xl">
           <span class="block text-fuchsia-400 text-4xl mb-3"><i class="fas fa-image"></i></span>

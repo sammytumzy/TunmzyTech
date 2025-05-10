@@ -292,3 +292,149 @@ modelViewer.addEventListener('error', (event) => {
   console.error('Error loading 3D model:', event);
   alert('The 3D model could not be loaded. Please check your internet connection or try again later.');
 });
+
+// Pi Network Integration
+let piUser = null;
+let piAccessToken = null;
+
+// Initialize Pi SDK
+const Pi = window.Pi;
+Pi.init({
+  version: "2.0",
+  sandbox: true, // Set to true for testing
+});
+
+// Update Pi status display
+function updatePiStatus(message, isError = false) {
+  const statusEl = document.getElementById('pi-status');
+  statusEl.textContent = message;
+  statusEl.classList.remove('hidden', 'bg-glass', 'bg-red-500', 'bg-green-500');
+  statusEl.classList.add(isError ? 'bg-red-500' : 'bg-green-500');
+  setTimeout(() => {
+    statusEl.classList.add('hidden');
+  }, 3000);
+}
+
+// Handle Pi Network authentication
+async function authenticateWithPi() {
+  try {
+    const scopes = ['payments'];
+    const auth = await Pi.authenticate(scopes, onIncompletePaymentFound);
+    piUser = auth.user;
+    piAccessToken = auth.accessToken;
+    updatePiStatus(`Welcome, ${auth.user.username}!`);
+    return auth;
+  } catch (error) {
+    console.error('Pi authentication failed:', error);
+    updatePiStatus('Authentication failed', true);
+    return null;
+  }
+}
+
+// Handle incomplete payments
+function onIncompletePaymentFound(payment) {
+  console.log("Incomplete payment found:", payment);
+  return handlePayment(payment.amount, payment.memo);
+}
+
+// Handle Pi Network payments
+async function handlePayment(paymentType = 'chatSubscription') {
+  try {
+    // First authenticate if not already done
+    if (!piUser) {
+      const auth = await authenticateWithPi();
+      if (!auth) return;
+    }
+
+    // Create payment on server
+    const response = await fetch('/api/pi/create-payment', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${piAccessToken}`
+      },
+      body: JSON.stringify({
+        paymentType,
+        uid: piUser.uid
+      })
+    });
+
+    const data = await response.json();
+    if (!data.success) {
+      throw new Error(data.message || 'Failed to create payment');
+    }
+
+    updatePiStatus('Processing payment...');
+
+    // Create payment with Pi SDK
+    const payment = await Pi.createPayment({
+      amount: data.paymentData.amount,
+      memo: data.paymentData.memo,
+      metadata: data.paymentData.metadata
+    }, {
+      onReadyForServerApproval: async function(paymentId) {
+        try {
+          const approvalRes = await fetch('/api/pi/approve', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${piAccessToken}`
+            },
+            body: JSON.stringify({ paymentId })
+          });
+          const approvalData = await approvalRes.json();
+          if (!approvalData.success) throw new Error('Payment approval failed');
+          updatePiStatus('Payment approved!');
+        } catch (error) {
+          console.error('Approval error:', error);
+          updatePiStatus('Approval failed', true);
+        }
+      },
+      onReadyForServerCompletion: async function(paymentId, txid) {
+        try {
+          const completeRes = await fetch('/api/pi/complete', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${piAccessToken}`
+            },
+            body: JSON.stringify({ paymentId, txid })
+          });
+          const completeData = await completeRes.json();
+          if (!completeData.success) throw new Error('Payment completion failed');
+          updatePiStatus('Payment completed successfully!');
+          setTimeout(() => {
+            window.location.href = '/chat.html'; // Redirect to chat page
+          }, 2000);
+        } catch (error) {
+          console.error('Completion error:', error);
+          updatePiStatus('Completion failed', true);
+        }
+      },
+      onCancel: function() {
+        updatePiStatus('Payment cancelled', true);
+      },
+      onError: function(error) {
+        console.error('Payment error:', error);
+        updatePiStatus('Payment failed', true);
+      }
+    });
+
+    return payment;
+  } catch (error) {
+    console.error('Payment error:', error);
+    updatePiStatus(error.message || 'Payment failed', true);
+    return null;
+  }
+}
+
+// Add payment button event listeners
+document.addEventListener('DOMContentLoaded', () => {
+  const payButton = document.getElementById('payWithPi');
+  if (payButton) {
+    payButton.addEventListener('click', () => handlePayment('chatSubscription'));
+  }
+  
+  // Initialize Pi authentication
+  authenticateWithPi();
+});
