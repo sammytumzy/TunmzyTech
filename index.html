@@ -795,24 +795,7 @@
         console.error('Error completing payment:', error);
         throw error;
       }
-    }
-
-    // Add event listener for payment button
-    document.getElementById('payWithPi').addEventListener('click', async () => {
-      try {
-        // First authenticate
-        const auth = await authenticateWithPi();
-        if (!auth) {
-          throw new Error('Authentication failed');
-        }
-        
-        // Then create payment
-        await createPayment();
-      } catch (error) {
-        console.error('Payment process failed:', error);
-        alert('Payment process failed: ' + error.message);
-      }
-    });
+    }    // Payment functionality has been moved to the chat.html page
 
     // Call authentication on page load
     document.addEventListener('DOMContentLoaded', authenticateWithPi);
@@ -922,21 +905,11 @@
           Explore TumzyTech’s core AI-driven services. Accelerate growth, foster innovation, and gain unparalleled insights with our cutting-edge solutions.
         </p>
       </div>
-      <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-7">
-        <!-- Service Card -->
+      <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-7">        <!-- Service Card -->
         <a href="chat.html" class="relative z-10 bg-glass p-8 rounded-3xl shadow-lg group transform transition duration-300 hover:-translate-y-3 hover:shadow-xl">
-          <span class="block text-cyan-400 text-4xl mb-3"><i class="fas fa-robot"></i></span>          <h3 class="font-bold mb-2">AI-Driven Content Creation</h3>          
+          <span class="block text-cyan-400 text-4xl mb-3"><i class="fas fa-robot"></i></span>
+          <h3 class="font-bold mb-2">AI-Driven Content Creation</h3>          
           <p class="text-sm text-gray-300 mb-3">Generate text, images, and multimedia at scale. Powered by advanced generative models tailored to your audience.</p>
-          <div class="flex flex-col items-center gap-2">
-            <button id="payWithPi" class="mt-4 px-8 py-3 animated-gradient rounded-xl font-bold text-lg shadow-lg hover:scale-105 transition-transform duration-200 ease-in-out flex items-center justify-center">
-              <i class="fas fa-coins mr-2"></i>Subscribe with π
-            </button>
-            <div class="flex items-center gap-1 text-xs text-gray-400">
-              <span>0.5</span>
-              <span class="text-lg leading-none">π</span>
-              <span>for full access</span>
-            </div>
-          </div>
         </a>
         <a href="chat.html" class="relative z-10 bg-glass p-8 rounded-3xl shadow-lg group transform transition duration-300 hover:-translate-y-3 hover:shadow-xl">
           <span class="block text-fuchsia-400 text-4xl mb-3"><i class="fas fa-image"></i></span>

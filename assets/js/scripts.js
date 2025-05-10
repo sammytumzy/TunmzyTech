@@ -335,10 +335,5 @@ function onIncompletePaymentFound(payment) {
   return handlePiPayment();
 }
 
-// Add payment button click handler
-document.addEventListener('DOMContentLoaded', () => {
-  const payButton = document.getElementById('payWithPi');
-  if (payButton) {
-    payButton.addEventListener('click', handlePiPayment);
-  }
-});
+// Payment functionality has been moved to the chat.html page
+// No need to attach event listeners for payWithPi here
