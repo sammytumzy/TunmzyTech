@@ -2,12 +2,23 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, maximum-scale=1.0, user-scalable=no">
   <title>Chat with TumzyTech</title>
   <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
   <link rel="stylesheet" href="assets/css/styles.css">
   <link rel="icon" href="assets/pictures/favicon.ico" type="image/x-icon">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/bodymovin/5.9.6/lottie.min.js"></script>
+  <script src="https://sdk.minepi.com/pi-sdk.js"></script>
   <style>
+    /* Placeholder background for faster initial load */
+    body {
+      background: url('assets/pictures/robot-placeholder.png') center/cover no-repeat;
+      background-color: #4c1d95; /* Fallback color */
+    }
+    #video-background {
+      display: none;
+    }
+
     /* Add a dynamic purple gradient background */
     body {
       background: linear-gradient(270deg, #7e22ce, #4c1d95, #9333ea, #7e22ce);
@@ -36,6 +47,34 @@
       opacity: 0.2;
     }
 
+    /* Add a container for the AI tech icons animation */
+    #ai-tech-animation {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: -1;
+      pointer-events: none;
+    }
+
+    /* Add a container for the video background */
+    #video-background {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: -1;
+      overflow: hidden;
+    }
+
+    #video-background video {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
     /* Facebook Messenger-like styling */
     .chat-container {
       background: rgba(24, 26, 39, 0.9);
@@ -45,6 +84,19 @@
       max-width: 600px;
       margin: 50px auto;
       border: none;
+      animation: fadeInUp 1.5s ease-in-out;
+      margin-top: 100px; /* Push the chat box lower to avoid overlapping with the back button */
+    }
+
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(50px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
     }
 
     .chat-header {
@@ -123,12 +175,46 @@
       transform: scale(1.1);
       box-shadow: 0 0 20px rgba(124, 58, 237, 0.8);
     }
+
+    /* Ensure sharp graphics on mobile */
+    img, video {
+      image-rendering: auto;
+      -webkit-optimize-contrast: high;
+    }
+
+    /* Adjust spacing for chatbox */
+    .chatbox {
+      margin-top: 20px; /* Add spacing between 'Back to Homepage' and chatbox */
+    }
+
+    @media (max-width: 768px) {
+      .back-button {
+        position: absolute;
+        top: 10px;
+        left: 10px;
+        margin-bottom: 0; /* Remove extra spacing */
+      }
+
+      .chat-header {
+        margin-top: 50px; /* Add spacing to align with the back button */
+      }
+    }
   </style>
 </head>
 <body>
+  <a href="index.html" class="absolute top-4 left-4 px-6 py-3 text-purple-500 rounded-lg shadow hover:text-purple-400 transition font-semibold text-lg glow-logo back-button">Back</a>
+  <div id="video-background">
+    <video autoplay muted loop>
+      <source src="assets/videos/background-video.mp4" type="video/mp4">
+      Your browser does not support the video tag.
+    </video>
+  </div>
+  <canvas id="particles-bg" class="fixed top-0 left-0 w-full h-full z-0 pointer-events-none"></canvas>
   <div id="tech-animation"></div>
+  <div id="ai-tech-animation"></div>
   <div class="chat-container">
     <div class="chat-header">Chat with TumzyBot</div>
+    <div id="subscription-status" class="text-center mb-2 text-sm text-gray-300"></div>
     <div id="chat-window" class="chat-window">
       <div class="chat-message bot">Hello! How can I assist you with TumzyTech today?</div>
     </div>
@@ -136,8 +222,18 @@
       <input type="text" id="user-input" placeholder="Type your message...">
       <button type="submit">Send</button>
     </form>
+    <div class="flex justify-between mt-2">
+      <button id="pay-button" class="px-4 py-2 bg-blue-500 text-white rounded">Subscribe with Pi</button>
+      <div id="trial-counter" class="text-sm text-gray-300 self-center"></div>
+    </div>
   </div>
   <script>
+    // Lazy load the video background
+    window.addEventListener('load', function() {
+      const videoBackground = document.getElementById('video-background');
+      videoBackground.style.display = 'block';
+    });
+
     const chatWindow = document.getElementById('chat-window');
     const chatForm = document.getElementById('chat-form');
     const userInput = document.getElementById('user-input');
@@ -161,26 +257,369 @@
       chatWindow.appendChild(botMessageDiv);
     }
 
-    chatForm.addEventListener('submit', (e) => {
+    // Update subscription and trial status in UI
+    function updateSubscriptionUI(data) {
+      const subscriptionStatus = document.getElementById('subscription-status');
+      const trialCounter = document.getElementById('trial-counter');
+      
+      if (data.subscriptionActive) {
+        // User has active subscription
+        const endDate = new Date(data.subscriptionEndDate);
+        subscriptionStatus.textContent = `Premium subscription active until ${endDate.toLocaleDateString()}`;
+        subscriptionStatus.classList.add('text-green-400');
+        trialCounter.textContent = '';
+      } else if (data.trialRemaining > 0) {
+        // User has trial messages left
+        subscriptionStatus.textContent = '';
+        trialCounter.textContent = `${data.trialRemaining} free messages left`;
+      } else {
+        // No subscription and no trial messages
+        subscriptionStatus.textContent = 'Free trial ended. Subscribe to continue.';
+        subscriptionStatus.classList.add('text-yellow-400');
+        trialCounter.textContent = '';
+      }
+    }
+    
+    chatForm.addEventListener('submit', async (e) => {
       e.preventDefault();
-      const userMessage = userInput.value.trim();
-      if (userMessage) {
+      const message = userInput.value.trim();
+      if (message) {
         const userMessageDiv = document.createElement('div');
         userMessageDiv.className = 'chat-message user';
-        userMessageDiv.textContent = userMessage;
+        userMessageDiv.textContent = message;
         chatWindow.appendChild(userMessageDiv);
         userInput.value = '';
         chatWindow.scrollTop = chatWindow.scrollHeight;
-
-        // Simulate bot response
-        setTimeout(() => {
-          const botMessageDiv = document.createElement('div');
-          botMessageDiv.className = 'chat-message bot';
-          botMessageDiv.textContent = 'Thank you for your message! Let me assist you with that.';
-          chatWindow.appendChild(botMessageDiv);
+        
+        // Show typing indicator
+        const typingDiv = document.createElement('div');
+        typingDiv.className = 'chat-message bot';
+        typingDiv.innerHTML = '<div class="typing-indicator"><span></span><span></span><span></span></div>';
+        typingDiv.style.padding = '10px';
+        chatWindow.appendChild(typingDiv);
+        chatWindow.scrollTop = chatWindow.scrollHeight;
+        
+        try {
+          const response = await fetch('/api/services/chatbot', {
+            method: 'POST',
+            headers: { 
+              'Content-Type': 'application/json',
+              'Authorization': window.piAccessToken ? `Bearer ${window.piAccessToken}` : ''
+            },
+            body: JSON.stringify({ 
+              message,
+              username: window.piUser ? window.piUser.username : null
+            }),
+          });
+          
+          // Remove typing indicator
+          chatWindow.removeChild(typingDiv);
+          
+          if (response.status === 402) {
+            // Payment required
+            const data = await response.json();
+            const botMessageDiv = document.createElement('div');
+            botMessageDiv.className = 'chat-message bot';
+            botMessageDiv.innerHTML = `${data.message} <button id="subscribe-now" class="bg-green-500 text-white px-2 py-1 rounded text-xs ml-2">Subscribe Now</button>`;
+            chatWindow.appendChild(botMessageDiv);
+            
+            // Add event listener to the subscribe button
+            document.getElementById('subscribe-now').addEventListener('click', () => {
+              createPayment('chatSubscription');
+            });
+          } else {
+            const data = await response.json();
+            const botMessageDiv = document.createElement('div');
+            botMessageDiv.className = 'chat-message bot';
+            botMessageDiv.textContent = data.response;
+            chatWindow.appendChild(botMessageDiv);
+            
+            // Update subscription and trial status if available
+            if (data.trialRemaining !== undefined || data.subscriptionActive !== undefined) {
+              updateSubscriptionUI(data);
+            }
+          }
+          
           chatWindow.scrollTop = chatWindow.scrollHeight;
-        }, 1000);
+        } catch (error) {
+          console.error('Error communicating with chatbot API:', error);
+          
+          // Remove typing indicator
+          chatWindow.removeChild(typingDiv);
+          
+          // Show error message
+          const errorDiv = document.createElement('div');
+          errorDiv.className = 'chat-message bot';
+          errorDiv.textContent = 'Sorry, there was an error connecting to the chatbot. Please try again later.';
+          chatWindow.appendChild(errorDiv);
+          chatWindow.scrollTop = chatWindow.scrollHeight;
+        }
       }
+    });
+    
+    // Add typing indicator styles
+    const style = document.createElement('style');
+    style.textContent = `
+      .typing-indicator {
+        display: flex;
+        align-items: center;
+      }
+      .typing-indicator span {
+        height: 8px;
+        width: 8px;
+        background: #fff;
+        border-radius: 50%;
+        display: inline-block;
+        margin: 0 2px;
+        animation: typing 1.5s infinite ease-in-out;
+      }
+      .typing-indicator span:nth-child(2) {
+        animation-delay: 0.2s;
+      }
+      .typing-indicator span:nth-child(3) {
+        animation-delay: 0.4s;
+      }
+      @keyframes typing {
+        0%, 100% { transform: translateY(0); }
+        50% { transform: translateY(-10px); }
+      }
+    `;
+    document.head.appendChild(style);
+  </script>
+  <script>
+    // Initialize Pi Network SDK
+    const pi = window.Pi;
+    const piConfig = {
+      version: "2.0",
+      sandbox: true, // Set to true for testing in sandbox mode
+      onIncompletePaymentFound: handleIncompletePayment
+    };
+    
+    pi.init(piConfig);
+    
+    // Handle incomplete payments
+    function handleIncompletePayment(payment) {
+      console.log("Incomplete payment found:", payment);
+      // Attempt to complete the payment
+      if (payment.status === 'created') {
+        approvePayment(payment.identifier);
+      } else if (payment.status === 'approved') {
+        completePayment(payment.identifier, payment.transaction && payment.transaction.txid);
+      }
+    }
+    
+    // Authenticate with Pi Network
+    async function authenticateWithPi() {
+      try {
+        const scopes = ['username', 'payments'];
+        const auth = await pi.authenticate(scopes, onIncompletePaymentFound);
+        window.piUser = auth.user;
+        window.piAccessToken = auth.accessToken;
+        
+        // Update UI with username
+        const chatHeader = document.querySelector('.chat-header');
+        chatHeader.textContent = `Chat with TumzyBot (${auth.user.username})`;
+        
+        // Check subscription status
+        checkSubscriptionStatus();
+        
+        return auth;
+      } catch (error) {
+        console.error('Pi authentication failed:', error);
+        return null;
+      }
+    }
+    
+    // Check user's subscription status
+    async function checkSubscriptionStatus() {
+      try {
+        const response = await fetch('/api/pi/payment-history', {
+          headers: {
+            'Authorization': `Bearer ${window.piAccessToken}`
+          }
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+          const payButton = document.getElementById('pay-button');
+          
+          if (data.subscriptionActive) {
+            // User has an active subscription
+            const endDate = new Date(data.subscriptionEndDate);
+            payButton.textContent = `Subscribed until ${endDate.toLocaleDateString()}`;
+            payButton.classList.add('bg-green-500');
+            payButton.classList.remove('bg-blue-500');
+          } else {
+            // User doesn't have an active subscription
+            payButton.textContent = 'Subscribe with Pi (5π/month)';
+          }
+        }
+      } catch (error) {
+        console.error('Error checking subscription status:', error);
+      }
+    }
+    
+    // Create payment with Pi
+    async function createPayment(paymentType = 'chatSubscription') {
+      try {
+        // Get payment data from server
+        const response = await fetch('/api/pi/create-payment', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${window.piAccessToken}`
+          },
+          body: JSON.stringify({
+            paymentType,
+            uid: window.piUser ? window.piUser.uid : null
+          })
+        });
+        
+        const data = await response.json();
+        
+        if (!data.success) {
+          throw new Error(data.message || 'Failed to create payment');
+        }
+        
+        // Define payment callbacks
+        const paymentCallbacks = {
+          onReadyForServerApproval: approvePayment,
+          onReadyForServerCompletion: completePayment,
+          onCancel: function(paymentId) {
+            console.log('Payment cancelled:', paymentId);
+            showPaymentStatus('Payment cancelled', 'error');
+          },
+          onError: function(error, payment) {
+            console.error('Payment error:', error, payment);
+            showPaymentStatus(`Payment error: ${error}`, 'error');
+          }
+        };
+        
+        // Create payment with Pi SDK
+        const payment = await pi.createPayment(data.paymentData, paymentCallbacks);
+        console.log('Payment created:', payment);
+        showPaymentStatus('Payment initiated!', 'success');
+        
+        return payment;
+      } catch (error) {
+        console.error('Error creating payment:', error);
+        showPaymentStatus(`Payment failed: ${error.message}`, 'error');
+        throw error;
+      }
+    }
+    
+    // Approve payment with server
+    async function approvePayment(paymentId) {
+      try {
+        const response = await fetch('/api/pi/approve', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${window.piAccessToken}`
+          },
+          body: JSON.stringify({ paymentId })
+        });
+        
+        const data = await response.json();
+        
+        if (!data.success) {
+          throw new Error(data.message || 'Failed to approve payment');
+        }
+        
+        console.log('Payment approved:', paymentId);
+        showPaymentStatus('Payment approved', 'info');
+        
+        return data;
+      } catch (error) {
+        console.error('Error approving payment:', error);
+        showPaymentStatus(`Approval failed: ${error.message}`, 'error');
+        throw error;
+      }
+    }
+    
+    // Complete payment with server
+    async function completePayment(paymentId, txid) {
+      try {
+        const response = await fetch('/api/pi/complete', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${window.piAccessToken}`
+          },
+          body: JSON.stringify({ paymentId, txid })
+        });
+        
+        const data = await response.json();
+        
+        if (!data.success) {
+          throw new Error(data.message || 'Failed to complete payment');
+        }
+        
+        console.log('Payment completed:', paymentId);
+        showPaymentStatus('Payment completed successfully!', 'success');
+        
+        // Update subscription status
+        checkSubscriptionStatus();
+        
+        return data;
+      } catch (error) {
+        console.error('Error completing payment:', error);
+        showPaymentStatus(`Completion failed: ${error.message}`, 'error');
+        throw error;
+      }
+    }
+    
+    // Show payment status to user
+    function showPaymentStatus(message, type = 'info') {
+      // Create status element if it doesn't exist
+      let statusElement = document.getElementById('payment-status');
+      
+      if (!statusElement) {
+        statusElement = document.createElement('div');
+        statusElement.id = 'payment-status';
+        statusElement.className = 'mt-4 p-2 rounded text-center';
+        document.querySelector('.chat-container').appendChild(statusElement);
+      }
+      
+      // Set message and style based on type
+      statusElement.textContent = message;
+      
+      // Clear existing classes
+      statusElement.className = 'mt-4 p-2 rounded text-center';
+      
+      // Add class based on type
+      switch (type) {
+        case 'success':
+          statusElement.classList.add('bg-green-500', 'text-white');
+          break;
+        case 'error':
+          statusElement.classList.add('bg-red-500', 'text-white');
+          break;
+        case 'info':
+        default:
+          statusElement.classList.add('bg-blue-500', 'text-white');
+          break;
+      }
+      
+      // Auto-hide after 5 seconds
+      setTimeout(() => {
+        statusElement.style.opacity = '0';
+        statusElement.style.transition = 'opacity 1s';
+        
+        setTimeout(() => {
+          statusElement.style.display = 'none';
+        }, 1000);
+      }, 5000);
+    }
+    
+    // Initialize Pi authentication on page load
+    document.addEventListener('DOMContentLoaded', authenticateWithPi);
+    
+    // Add event listener to payment button
+    document.getElementById('pay-button').addEventListener('click', () => {
+      createPayment('chatSubscription')
+        .catch(error => console.error('Payment flow error:', error));
     });
   </script>
 </body>
