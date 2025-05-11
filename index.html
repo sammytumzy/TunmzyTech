@@ -20,17 +20,20 @@
   <script type="module" src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js"></script>  <!-- Pi Network SDK -->
   <script src="https://sdk.minepi.com/pi-sdk.js"></script>
   <!-- Add Pi Network status element -->
-  <div id="pi-status" class="hidden fixed top-4 right-4 bg-glass p-2 rounded-lg text-white"></div>
-  <link rel="stylesheet" href="assets/css/styles.css">
+  <div id="pi-status" class="hidden fixed top-4 right-4 bg-glass p-2 rounded-lg text-white"></div>  <link rel="stylesheet" href="assets/css/styles.css">
+  <link rel="stylesheet" href="assets/css/lazy-loading.css">  <script src="assets/js/page-loader.js"></script>
+  <script src="assets/js/pi-payments.js" defer></script>
   <script src="assets/js/scripts.js" defer></script>
   <link rel="icon" href="assets/pictures/favicon_io (4)/favicon.ico" type="image/x-icon">
   <link rel="apple-touch-icon" sizes="180x180" href="assets/pictures/favicon_io (4)/apple-touch-icon.png">
   <link rel="icon" type="image/png" sizes="32x32" href="assets/pictures/favicon_io (4)/favicon-32x32.png">
   <link rel="icon" type="image/png" sizes="16x16" href="assets/pictures/favicon_io (4)/favicon-16x16.png">
   <link rel="manifest" href="assets/pictures/favicon_io (4)/site.webmanifest">
-  <link rel="preload" href="assets/pictures/robot plaground.glb" as="fetch" type="model/gltf-binary" crossorigin="anonymous">
-  <link rel="preload" href="assets/pictures/aihelphuman.jpg" as="image" type="image/jpeg">
-  <link rel="preload" href="assets/videos/background-video.mp4" as="video" type="video/mp4">
+  <!-- Use preconnect instead of preload for better performance -->
+  <link rel="preconnect" href="https://unpkg.com">
+  <link rel="preconnect" href="https://cdn.jsdelivr.net">
+  <!-- Critical resources are loaded with high priority -->
+  <link rel="preload" href="assets/pictures/aihelphuman.jpg" as="image" fetchpriority="high">
   <meta name="description" content="TumzyTech - Revolutionizing AI Solutions for Business & Innovation. Explore AI-driven services, products, and solutions for businesses and individuals.">
   <style>
     /* Adjust text and background colors for better contrast */
@@ -836,19 +839,31 @@
     </ul>
     <button class="get-started glow-btn" onclick="location.href='#mission'">Get Started</button>
   </nav>
-
   <!-- 3D Logo Section -->
   <div class="centered-3d-model mt-10">
     <model-viewer 
-      src="assets/pictures/robot plaground.glb" 
+      data-src="assets/pictures/robot plaground.glb" 
       alt="3D Model of a robot playground" 
       auto-rotate 
       autoplay 
       disable-zoom 
       camera-controls="false" 
       interaction-prompt="none" 
-      style="width: 100%; max-width: 400px; height: 100%;">
+      style="width: 100%; max-width: 400px; height: 100%;"
+      poster="assets/pictures/robot-placeholder.png">
+      <div slot="poster" class="loading-placeholder" style="display: flex; align-items: center; justify-content: center; width: 100%; height: 100%;">
+        <div style="background: rgba(0,0,0,0.5); color: white; padding: 20px; border-radius: 8px; text-align: center;">
+          <div class="loading-spinner" style="border: 4px solid rgba(255,255,255,0.3); border-top: 4px solid white; border-radius: 50%; width: 40px; height: 40px; margin: 0 auto 10px; animation: spin 1s linear infinite;"></div>
+          <div>Loading 3D Model...</div>
+        </div>
+      </div>
     </model-viewer>
+    <style>
+      @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+      }
+    </style>
     <noscript>
       <p>Your browser does not support JavaScript or 3D models. Please enable JavaScript or use a modern browser to view this content.</p>
     </noscript>

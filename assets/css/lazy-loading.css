@@ -1,0 +1,85 @@
+/* Lazy loading styles for TumzyTech */
+
+/* Lazy images */
+.lazy-image {
+  opacity: 0;
+  transition: opacity 0.5s ease-in-out;
+  background-color: rgba(30, 41, 59, 0.3);
+}
+
+.lazy-image.loaded {
+  opacity: 1;
+}
+
+/* 3D Model Loading */
+model-viewer {
+  --poster-color: transparent;
+  min-height: 200px;
+  position: relative;
+}
+
+model-viewer.loading::after {
+  content: '';
+  position: absolute;
+  top: 45%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 3px solid rgba(255, 255, 255, 0.3);
+  border-top-color: #ffffff;
+  animation: spin 1s infinite linear;
+}
+
+.loading-indicator {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  padding: 10px 15px;
+  background-color: rgba(0, 0, 0, 0.6);
+  color: white;
+  border-radius: 8px;
+  font-size: 14px;
+  text-align: center;
+}
+
+/* Loading spinner animation */
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Video background fade in */
+#video-background {
+  opacity: 0;
+  transition: opacity 1s ease-in-out;
+}
+
+#video-background.loaded {
+  opacity: 1;
+}
+
+/* Loading progress bar for heavy elements */
+.loading-progress-bar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 3px;
+  background-color: #9333ea;
+  z-index: 9999;
+  transition: width 0.3s ease-out;
+}
+
+/* Placeholder for images */
+.image-placeholder {
+  background: linear-gradient(110deg, #2a2a4a 8%, #3a3a5a 18%, #2a2a4a 33%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+@keyframes shimmer {
+  0% { background-position: -100% 0; }
+  100% { background-position: 100% 0; }
+}
