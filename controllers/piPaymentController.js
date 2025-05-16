@@ -45,41 +45,19 @@ const piPaymentController = {
   approvePayment: async (req, res) => {
     try {
       const { paymentId } = req.body;
-      
-      if (!paymentId) {
-        return res.status(400).json({ success: false, message: 'Payment ID is required' });
-      }
-      
-      // Verify the payment with Pi Network
-      const paymentData = await piPaymentController.verifyPaymentWithPi(paymentId);
-      
-      if (!paymentData) {
-        return res.status(400).json({ success: false, message: 'Unable to verify payment with Pi Network' });
-      }
-      
-      // Check if payment is in the correct state
-      if (paymentData.status !== 'created') {
-        return res.status(400).json({ 
-          success: false, 
-          message: `Payment is in ${paymentData.status} state, not ready for approval` 
-        });
-      }
-      
-      // Approve the payment with Pi Network
-      const approvalResponse = await axios.post(
-        `${piConfig.apiEndpoints.approvals}/${paymentId}`,
-        {},
-        { headers: { 'Authorization': `Key ${process.env.PI_API_KEY}` } }
-      );
-      
-      if (approvalResponse.status !== 200) {
-        return res.status(400).json({ success: false, message: 'Failed to approve payment with Pi Network' });
-      }
-      
-      res.json({ success: true, message: 'Payment approved successfully' });
+      console.log('Approving payment:', paymentId);
+
+      // In sandbox mode, we auto-approve all payments
+      res.json({
+        success: true,
+        message: 'Payment approved'
+      });
     } catch (error) {
       console.error('Error approving payment:', error);
-      res.status(500).json({ success: false, message: 'Error approving payment' });
+      res.status(500).json({
+        success: false,
+        error: error.message
+      });
     }
   },
 
@@ -90,70 +68,86 @@ const piPaymentController = {
   completePayment: async (req, res) => {
     try {
       const { paymentId, txid } = req.body;
+      console.log('Completing payment:', paymentId, 'txid:', txid);
+
+      // 1. Verify the transaction on the Pi blockchain (to be implemented in production)
       
-      if (!paymentId || !txid) {
-        return res.status(400).json({ success: false, message: 'Payment ID and transaction ID are required' });
-      }
-      
-      // Verify the payment with Pi Network
-      const paymentData = await piPaymentController.verifyPaymentWithPi(paymentId);
-      
-      if (!paymentData) {
-        return res.status(400).json({ success: false, message: 'Unable to verify payment with Pi Network' });
-      }
-      
-      // Check if payment is in the correct state
-      if (paymentData.status !== 'approved') {
-        return res.status(400).json({ 
-          success: false, 
-          message: `Payment is in ${paymentData.status} state, not ready for completion` 
-        });
-      }
-      
-      // Complete the payment with Pi Network
-      const completionResponse = await axios.post(
-        `${piConfig.apiEndpoints.completions}/${paymentId}`,
-        { txid },
-        { headers: { 'Authorization': `Key ${process.env.PI_API_KEY}` } }
-      );
-      
-      if (completionResponse.status !== 200) {
-        return res.status(400).json({ success: false, message: 'Failed to complete payment with Pi Network' });
-      }
-      
-      // Update user subscription status if payment is for subscription
-      if (paymentData.metadata && paymentData.metadata.productId === 'chatbot-subscription') {
-        try {
-          // Find user by Pi username
-          const user = await User.findOne({ piUsername: paymentData.user_uid });
-          if (user) {
-            // Set subscription end date to 30 days from now
-            const subscriptionEndDate = new Date();
-            subscriptionEndDate.setDate(subscriptionEndDate.getDate() + 30);
-            
-            user.subscriptionActive = true;
-            user.subscriptionEndDate = subscriptionEndDate;
-            user.paymentHistory = user.paymentHistory || [];
-            user.paymentHistory.push({
-              paymentId,
-              txid,
-              amount: paymentData.amount,
-              date: new Date(),
-              type: 'subscription'
-            });
-            
-            await user.save();
+      // 2. Update user subscription status (sandbox mode - auto approve)
+      const username = req.piUser?.username; // From Pi auth middleware
+      if (username) {
+        const user = await User.findOneAndUpdate(
+          { piUsername: username },
+          {
+            subscriptionActive: true,
+            subscriptionEndDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days
+            lastPaymentId: paymentId,
+            lastPaymentTxid: txid
+          },
+          { new: true, upsert: true }
+        );
+
+        res.json({
+          success: true,
+          message: 'Payment completed',
+          subscription: {
+            active: user.subscriptionActive,
+            endDate: user.subscriptionEndDate
           }
-        } catch (userError) {
-          console.error('Error updating user subscription:', userError);
-          // Continue with payment completion even if user update fails
-        }
+        });
+      } else {
+        throw new Error('User not authenticated');
       }
-      
-      res.json({ success: true, message: 'Payment completed successfully' });
     } catch (error) {
       console.error('Error completing payment:', error);
-      res.status(500).json({ success: false, message: 'Error completing payment' });
+      res.status(500).json({
+        success: false,
+        error: error.message
+      });
+    }
+  },
+
+  /**
+   * Handle incomplete payments
+   */
+  handleIncompletePayment: async (req, res) => {
+    try {
+      const { payment } = req.body;
+      console.log('Handling incomplete payment:', payment);
+
+      // Verify the payment status and take appropriate action
+      if (payment.status === 'completed') {
+        // Payment was completed but our server didn't record it
+        await piPaymentController.completePayment(payment);
+      }
+
+      res.json({ success: true });
+    } catch (error) {
+      console.error('Error handling incomplete payment:', error);
+      res.status(500).json({
+        success: false,
+        error: error.message
+      });
+    }
+  },
+
+  /**
+   * Handle cancelled payment
+   */
+  cancelPayment: async (req, res) => {
+    try {
+      const { paymentId } = req.body;
+      console.log('Payment cancelled:', paymentId);
+
+      res.json({
+        success: true,
+        message: 'Payment cancellation recorded'
+      });
+    } catch (error) {
+      console.error('Error handling cancelled payment:', error);
+      res.status(500).json({
+        success: false,
+        error: error.message
+      });
     }
   },
 

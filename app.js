@@ -10,16 +10,56 @@ const PORT = process.env.PORT || 5000;
 
 // Middleware
 app.use(express.json());
+const cors = require('cors');
+
+const allowedOrigins = [
+  'http://127.0.0.1:5500',
+  'http://localhost:5500',
+  'http://localhost:5000',
+  'http://127.0.0.1:5000',
+  'https://tumzytech.com' // Add your production domain here
+];
+app.use(cors({
+  origin: function(origin, callback) {
+    // Allow requests with no origin (like mobile apps, curl, etc.)
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.indexOf(origin) !== -1) {
+      return callback(null, true);
+    } else {
+      return callback(new Error('Not allowed by CORS'));
+    }
+  },
+  methods: ['GET', 'POST'],
+  credentials: true
+}));
+
+// Add session support for conversation history
+const session = require('express-session');
+
+// Session configuration
+app.use(session({
+  secret: process.env.SESSION_SECRET || 'dev_session_secret',
+  resave: false,
+  saveUninitialized: true,
+  cookie: {
+    secure: process.env.NODE_ENV === 'production',
+    maxAge: 24 * 60 * 60 * 1000 // 24 hours
+  }
+}));
 
 // Import routes
 const piRoutes = require('./routes/pi');
+const piPaymentRoutes = require('./routes/pi-payment');
+const servicesRoutes = require('./routes/services');
 
 // Serve static files from the root directory
 app.use(express.static(path.join(__dirname, 'public')));
 app.use('/assets', express.static(path.join(__dirname, 'assets')));
 
-// Use Pi Network routes
+// Use routes
 app.use('/api/pi', piRoutes);
+app.use('/api/services', servicesRoutes);
+app.use('/api/pi/payments', piPaymentRoutes);
 
 // Serve static files for the frontend
 app.get('/', (req, res) => {
@@ -38,6 +78,15 @@ app.use((err, req, res, next) => {
     success: false,
     message: 'Something went wrong!',
     error: err.message // Including error message for both dev and prod for now
+  });
+});
+
+// Health check endpoint for connectivity testing
+app.get('/api/health', (req, res) => {
+  res.json({
+    status: 'ok',
+    message: 'Server is running',
+    timestamp: new Date().toISOString()
   });
 });
 

@@ -14,12 +14,19 @@ const piAuth = {
       // For development mode - bypass authentication check
       // IMPORTANT: Remove this in production!
       if (process.env.NODE_ENV !== 'production') {
+        // Provide a mock user and session for dev mode
         req.user = {
           piUsername: 'test_user',
           name: 'Test User',
           subscriptionActive: false,
-          subscriptionEndDate: null
+          subscriptionEndDate: null,
+          trialCount: req.session && req.session.trialCount !== undefined ? req.session.trialCount : 0
         };
+        // Track trialCount in session for dev
+        if (req.session) {
+          if (typeof req.session.trialCount === 'undefined') req.session.trialCount = 0;
+          req.user.trialCount = req.session.trialCount;
+        }
         return next();
       }
       
