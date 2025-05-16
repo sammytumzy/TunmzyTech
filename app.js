@@ -59,7 +59,9 @@ app.use('/assets', express.static(path.join(__dirname, 'assets')));
 // Use routes
 app.use('/api/pi', piRoutes);
 app.use('/api/services', servicesRoutes);
-app.use('/api/pi/payments', piPaymentRoutes);
+
+// Specific route for Pi payments
+app.use('/api/pi/payments', require('./routes/pi-payment'));
 
 // Serve static files for the frontend
 app.get('/', (req, res) => {

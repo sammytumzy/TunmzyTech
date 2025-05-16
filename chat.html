@@ -852,6 +852,12 @@
       showPaymentStatus(`Payment failed: ${error.message}`, 'error');
     }
   }
+
+  // Add event listener to Subscribe button
+  const subscribeButton = document.getElementById('pay-button');
+  if (subscribeButton) {
+    subscribeButton.addEventListener('click', handlePiPayment);
+  }
 </script>
 </body>
 </html>

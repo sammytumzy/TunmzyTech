@@ -1,8 +1,21 @@
 // Pi Network Integration
-let Pi = window.Pi;
+const Pi = window.Pi;
 let piInitialized = false;
 
-// Pi SDK configuration
+// Initialize when document is ready
+document.addEventListener('DOMContentLoaded', () => {
+    // Initialize Pi SDK
+    initializePi();
+    
+    // Setup payment button
+    const payButton = document.getElementById('pay-button');
+    if (payButton) {
+        payButton.addEventListener('click', handlePiPayment);
+        console.log('Payment button listener added');
+    }
+});
+
+// Initialize Pi SDK with sandbox mode
 const piConfig = {
     version: "2.0",
     sandbox: true, // Always true for testing
@@ -54,32 +67,6 @@ async function handleIncompletePayment(payment) {
         console.error('Error handling incomplete payment:', error);
         showPaymentStatus('Error handling incomplete payment', 'error');
         return false;
-    }
-}
-
-// Authenticate with Pi Network
-async function authenticateWithPi() {
-    try {
-        const auth = await Pi.authenticate(['username', 'payments'], handleIncompletePayment);
-        if (!auth) {
-            throw new Error('Authentication failed');
-        }
-
-        const { user } = auth;
-        console.log("Authenticated with Pi:", user.username);
-        showPaymentStatus(`Welcome back, ${user.username}!`, 'success');
-
-        // Update chat header with username
-        const chatHeader = document.querySelector('.chat-header');
-        if (chatHeader) {
-            chatHeader.textContent = `Chat with TumzyBot (${user.username})`;
-        }
-
-        return auth;
-    } catch (error) {
-        console.error('Pi authentication failed:', error);
-        showPaymentStatus('Authentication failed', 'error');
-        return null;
     }
 }
 
@@ -168,9 +155,18 @@ async function handlePiPayment() {
         showPaymentStatus('Starting payment process...', 'info');
 
         // 1. Authenticate user
-        const auth = await authenticateWithPi();
+        const auth = await Pi.authenticate(['username', 'payments'], handleIncompletePayment);
         if (!auth) {
             throw new Error('Authentication failed');
+        }
+
+        console.log("Authenticated with Pi:", auth.user.username);
+        showPaymentStatus('Authenticated! Creating payment...', 'info');
+
+        // Update chat header with username
+        const chatHeader = document.querySelector('.chat-header');
+        if (chatHeader) {
+            chatHeader.textContent = `Chat with TumzyBot (${auth.user.username})`;
         }
 
         // 2. Create payment
@@ -185,13 +181,12 @@ async function handlePiPayment() {
         }, paymentCallbacks);
 
         console.log('Payment created:', payment);
-        showPaymentStatus('Processing payment...', 'info');
+        showPaymentStatus('Payment created, waiting for approval...', 'info');
 
     } catch (error) {
         console.error('Payment process failed:', error);
         showPaymentStatus(error.message, 'error');
         
-        // Show Pi Browser help if SDK is not available
         if (error.message.includes('Pi SDK not available')) {
             const piHelp = document.getElementById('pi-help');
             if (piHelp) {
@@ -201,20 +196,3 @@ async function handlePiPayment() {
         }
     }
 }
-
-// Initialize when the page loads
-document.addEventListener('DOMContentLoaded', () => {
-    // Initialize Pi SDK
-    initializePi();
-    
-    // Setup payment button
-    const payButton = document.getElementById('pay-button');
-    if (payButton) {
-        payButton.addEventListener('click', handlePiPayment);
-    }
-    
-    // Try initial authentication if in Pi Browser
-    if (window.Pi) {
-        authenticateWithPi().catch(console.error);
-    }
-});

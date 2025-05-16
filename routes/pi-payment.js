@@ -3,12 +3,19 @@ const router = express.Router();
 const { ensurePiAuthenticated } = require('../middlewares/piAuth');
 const piPaymentController = require('../controllers/piPaymentController');
 
-// Handle incomplete payments (no auth required as it's coming from Pi SDK)
+// Handle all payment related endpoints
 router.post('/incomplete', piPaymentController.handleIncompletePayment);
-
-// Payment lifecycle endpoints
 router.post('/approve', ensurePiAuthenticated, piPaymentController.approvePayment);
 router.post('/complete', ensurePiAuthenticated, piPaymentController.completePayment);
 router.post('/cancelled', ensurePiAuthenticated, piPaymentController.cancelPayment);
+
+// Error handler specific to payment routes
+router.use((err, req, res, next) => {
+  console.error('Pi Payment Error:', err);
+  res.status(500).json({
+    success: false,
+    error: err.message || 'Payment processing error'
+  });
+});
 
 module.exports = router;
