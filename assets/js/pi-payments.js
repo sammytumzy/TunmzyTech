@@ -1,6 +1,6 @@
 // Pi Network Integration
-const Pi = window.Pi;
-let piInitialized = false;
+var Pi = window.Pi;
+var piInitialized = false;
 
 // Initialize when document is ready
 document.addEventListener('DOMContentLoaded', () => {
