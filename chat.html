@@ -44,7 +44,7 @@
       100% { background-position: 0% 50%; }
     }
 
-    /* Add tech-style animation background */
+    /* Remove tech-style animation background if file is missing */
     #tech-animation {
       position: fixed;
       top: 0;
@@ -53,7 +53,6 @@
       height: 100%;
       z-index: -1;
       pointer-events: none;
-      background: url('assets/videos/Animation - 1745624516663.lottie') center/cover no-repeat;
       opacity: 0.2;
     }
 
@@ -735,129 +734,6 @@
       }
     `;
     document.head.appendChild(style);
-  </script>  <script>
-  // Pi Network SDK initialization
-  const pi = window.Pi;
-  let piInitialized = false;
-
-  // Config to use sandbox in development, production in prod
-  const piConfig = {
-    version: "2.0",
-    sandbox: process.env.NODE_ENV !== "production" // Use sandbox in development
-  };
-
-  // Initialize Pi SDK
-  try {
-    pi.init(piConfig);
-    console.log('Pi SDK initialized:', piConfig);
-    piInitialized = true;
-  } catch (err) {
-    console.error('Failed to initialize Pi SDK:', err);
-  }
-
-  // Handle incomplete payments (required by Pi SDK)
-  const onIncompletePaymentFound = (payment) => {
-    console.log("onIncompletePaymentFound", payment);
-    return fetch('/api/payments/incomplete', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ payment })
-    });
-  };
-
-  // Payment callbacks
-  const paymentCallbacks = {
-    onReadyForServerApproval: async (paymentId) => {
-      console.log("onReadyForServerApproval", paymentId);
-      const response = await fetch('/api/payments/approve', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ paymentId })
-      });
-      return response.ok;
-    },
-
-    onReadyForServerCompletion: async (paymentId, txid) => {
-      console.log("onReadyForServerCompletion", paymentId, txid);
-      const response = await fetch('/api/payments/complete', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ paymentId, txid })
-      });
-      if (response.ok) {
-        const data = await response.json();
-        updateSubscriptionUI(data);
-      }
-      return response.ok;
-    },
-
-    onCancel: async (paymentId) => {
-      console.log("onCancel", paymentId);
-      await fetch('/api/payments/cancelled', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ paymentId })
-      });
-    },
-
-    onError: (error, payment) => {
-      console.error("onError", error);
-      if (payment) {
-        console.error("Payment error:", payment);
-      }
-      showPaymentStatus('Payment failed: ' + error.message, 'error');
-    }
-  };
-
-  // Create a Pi payment
-  async function handlePiPayment() {
-    try {
-      if (!pi || !piInitialized) {
-        showPaymentStatus('Pi SDK not available. Please use Pi Browser.', 'error');
-        return;
-      }
-
-      showPaymentStatus('Authenticating...', 'info');
-      
-      // 1. Authenticate user
-      const auth = await pi.authenticate(['payments'], onIncompletePaymentFound);
-      if (!auth) {
-        throw new Error('Authentication failed');
-      }
-
-      // Store user info
-      window.piUser = auth.user;
-      console.log("Authenticated with Pi:", auth.user.username);
-
-      // Update chat header with username
-      const chatHeader = document.querySelector('.chat-header');
-      if (chatHeader) {
-        chatHeader.textContent = `Chat with TumzyBot (${auth.user.username})`;
-      }
-
-      showPaymentStatus('Creating payment...', 'info');
-
-      // 2. Create payment
-      const paymentData = {
-        amount: 0.5, // 0.5 Pi
-        memo: "TumzyBot AI Assistant Monthly Subscription", 
-        metadata: { productId: "tumzybot_subscription" }
-      };
-
-      const payment = await pi.createPayment(paymentData, paymentCallbacks);
-      console.log('Payment created:', payment);
-
-    } catch (error) {
-      console.error('Payment process failed:', error);
-      showPaymentStatus(`Payment failed: ${error.message}`, 'error');
-    }
-  }
-
-  // Add event listener to Subscribe button
-  const subscribeButton = document.getElementById('pay-button');
-  if (subscribeButton) {
-    subscribeButton.addEventListener('click', handlePiPayment);
-  }
-</script>
+  </script>
 </body>
 </html>

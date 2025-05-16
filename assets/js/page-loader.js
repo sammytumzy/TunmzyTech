@@ -3,12 +3,29 @@
  * Tracks page loading progress and updates a visual indicator
  */
 
-(function() {
+document.addEventListener('DOMContentLoaded', function() {
   // Create loading progress bar
   const progressBar = document.createElement('div');
   progressBar.className = 'loading-progress-bar';
+  progressBar.style.position = 'fixed'; // Ensure it's positioned correctly
+  progressBar.style.top = '0';
+  progressBar.style.left = '0';
+  progressBar.style.height = '4px'; // Give it some height
+  progressBar.style.backgroundColor = '#7e22ce'; // Purple color
+  progressBar.style.zIndex = '999999'; // Ensure it's on top
   progressBar.style.width = '0%';
-  document.body.appendChild(progressBar);
+  
+  // Defer appending to ensure document.body is available
+  const appendProgressBar = () => {
+    if (document.body) {
+      document.body.appendChild(progressBar);
+    } else {
+      // If body is still not available, try again shortly
+      // This is a fallback, should ideally not be needed with DOMContentLoaded
+      setTimeout(appendProgressBar, 50); 
+    }
+  };
+  appendProgressBar();
 
   // Track loaded resources
   let loadedResources = 0;
@@ -101,4 +118,4 @@
   
   // Set minimum progress immediately
   progressBar.style.width = '10%';
-})();
+});
