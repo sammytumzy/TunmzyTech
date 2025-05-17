@@ -734,7 +734,20 @@
   </script>
 
   <!-- Pi SDK & payment integration -->
-  <script src="https://sandbox.minepi.com/pi-sdk.js"></script>
+  <script>
+    // Conditionally load Pi SDK or mock based on user agent
+    if (navigator.userAgent.includes('PiBrowser')) {
+      // Load real Pi SDK
+      var script = document.createElement('script');
+      script.src = 'https://sdk.minepi.com/pi-sdk.js';
+      document.head.appendChild(script);
+    } else {
+      // Load mock Pi SDK for local testing
+      var script = document.createElement('script');
+      script.src = 'assets/js/pi-sdk-mock.js';
+      document.head.appendChild(script);
+    }
+  </script>
   <script src="assets/js/pi-payments.js" defer></script>
 </body>
 </html>

@@ -137,9 +137,16 @@
   async function handlePiPayment() {
       console.log('handlePiPayment() called');
       try {
-          if (!Pi || !piInitialized) {
-              throw new Error('Pi SDK not available. Please use Pi Browser.');
+      if (!Pi || !piInitialized) {
+          console.warn('Pi SDK not available. This app must be run inside Pi Browser or sandbox mode.');
+          showPaymentStatus('Pi SDK not available. Please use Pi Browser sandbox mode.', 'error');
+          const piHelp = document.getElementById('pi-help');
+          if (piHelp) {
+              piHelp.classList.remove('hidden');
+              piHelp.classList.add('bg-purple-900', 'p-2', 'rounded', 'border', 'border-yellow-300');
           }
+          throw new Error('Pi SDK not available. Please use Pi Browser.');
+      }
 
           showPaymentStatus('Starting payment process...', 'info');
 
@@ -184,13 +191,13 @@
           console.error('Payment process failed:', error);
           showPaymentStatus(error.message, 'error');
           
-          if (error.message.includes('Pi SDK not available')) {
-              const piHelp = document.getElementById('pi-help');
-              if (piHelp) {
-                  piHelp.classList.remove('hidden');
-                  piHelp.classList.add('bg-purple-900', 'p-2', 'rounded', 'border', 'border-yellow-300');
-              }
+      if (error.message.includes('Pi SDK not available')) {
+          const piHelp = document.getElementById('pi-help');
+          if (piHelp) {
+              piHelp.classList.remove('hidden');
+              piHelp.classList.add('bg-purple-900', 'p-2', 'rounded', 'border', 'border-yellow-300');
           }
+      }
       }
   }
 
