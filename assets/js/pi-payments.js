@@ -1,11 +1,18 @@
 // Wrap entire Pi payments script to avoid duplicate loads
-(function() {
+;(function(){
   if (window.__piPaymentsLoaded) return;
   window.__piPaymentsLoaded = true;
 
-  // Pi Network Integration
+  // Pi SDK Integration
   var Pi = window.Pi;
   var piInitialized = false;
+
+  // Sandbox config with explicit host
+  var piConfig = {
+    version: "2.0",
+    sandbox: true,
+    apiOrigin: "https://sandbox.minepi.com"
+  };
 
   // Helper to detect Pi Browser environment
   function isRunningInPiBrowser() {
@@ -14,47 +21,6 @@
 
   // Alias incomplete payment callback for Pi SDK
   var onIncompletePaymentFound = handleIncompletePayment;
-
-  // Initialize when document is ready
-  document.addEventListener('DOMContentLoaded', () => {
-      console.log('DOM loaded (pi-payments.js), Pi:', Pi);
-      // Initialize Pi SDK
-      initializePi();
-      
-      // Setup payment button
-      var payButton = document.getElementById('pay-button');
-      console.log('payButton element:', payButton);
-      if (payButton) {
-          payButton.addEventListener('click', handlePiPayment);
-          console.log('Payment button listener added');
-      }
-  });
-
-  // Initialize Pi SDK with sandbox mode and proper host
-  var piConfig = {
-      version: "2.0",
-      sandbox: true,            // Always true for testing
-      host: "https://sandbox.minepi.com"  // Use Pi Browser sandbox host
-  };
-
-  // Initialize Pi SDK
-  function initializePi() {
-      console.log('initializePi() called');
-      if (!Pi) {
-          console.error('Pi SDK not available');
-          showPaymentStatus('Pi SDK not available', 'error');
-          return;
-      }
-      try {
-          Pi.init(piConfig);
-          piInitialized = true;
-          console.log('Pi SDK initialized successfully');
-          showPaymentStatus('Pi SDK initialized (sandbox mode)', 'info');
-      } catch (error) {
-          console.error('Failed to initialize Pi SDK:', error);
-          showPaymentStatus('Failed to initialize Pi SDK', 'error');
-      }
-  }
 
   // Show payment status to user
   function showPaymentStatus(message, type = 'info') {
@@ -227,5 +193,22 @@
           }
       }
   }
+
+  document.addEventListener('DOMContentLoaded', function() {
+    console.log('pi-payments.js DOMContentLoaded');
+    try {
+      Pi.init(piConfig);
+      piInitialized = true;
+      console.log('Pi SDK initialized with config', piConfig);
+      showPaymentStatus('Pi SDK initialized (sandbox)', 'info');
+    } catch (e) {
+      console.error('Pi.init error', e);
+      showPaymentStatus('Failed to init Pi SDK', 'error');
+    }
+
+    var btn = document.getElementById('pay-button');
+    console.log('pay-button element:', btn);
+    if (btn) btn.addEventListener('click', handlePiPayment);
+  });
 
 })();
