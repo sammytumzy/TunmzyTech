@@ -1,33 +1,4 @@
 /* Moved all JavaScript from index.html to this file */
-const particlesCanvas = document.getElementById('particles-bg');
-const particlesCtx = particlesCanvas.getContext('2d');
-
-// Parallax effect for elements with the class "parallax"
-document.addEventListener("mousemove", (event) => {
-    const x = event.clientX / window.innerWidth - 0.5;
-    const y = event.clientY / window.innerHeight - 0.5;
-
-    document.querySelectorAll(".parallax").forEach((element) => {
-        const speed = element.getAttribute("data-speed");
-        element.style.transform = `translate(${x * speed * 20}px, ${y * speed * 20}px)`;
-    });
-});
-
-// Sign-in page open and close animation
-// Use a different variable name to avoid conflicts
-const signinButtonElement = document.getElementById('signinButton');
-const signinPage = document.getElementById('signinPage');
-const closeIcon = document.getElementById('closeIcon');
-
-signinButtonElement?.addEventListener('click', function() {
-    signinPage?.classList.remove('closeSignin');
-    signinPage?.classList.add("openSignin");
-});
-
-closeIcon?.addEventListener('click', function() {
-    signinPage?.classList.remove("openSignin");
-    signinPage?.classList.add('closeSignin');
-});
 
 // Sidebar open and close functionality
 const sideBar = document.querySelector('.sidebar');
@@ -183,6 +154,141 @@ if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', initParticleBackground);
 } else {
   initParticleBackground();
+}
+
+// Auth Modal Logic
+const authModal = document.getElementById('authModal');
+const authModalLink = document.getElementById('authModalLink');
+const closeAuthModal = document.getElementById('closeAuthModal');
+const authModalTitle = document.getElementById('authModalTitle');
+const signInTabButton = document.getElementById('signInTabButton');
+const signUpTabButton = document.getElementById('signUpTabButton');
+const signInForm = document.getElementById('signInForm');
+const signUpForm = document.getElementById('signUpForm');
+const signInError = document.getElementById('signInError');
+const signUpError = document.getElementById('signUpError');
+
+if (authModalLink) {
+  authModalLink.addEventListener('click', (e) => {
+    e.preventDefault();
+    authModal.classList.remove('hidden');
+    // Default to Sign In tab
+    authModalTitle.textContent = 'Sign In';
+    signInTabButton.classList.add('border-purple-500');
+    signInTabButton.classList.remove('text-gray-400', 'hover:text-white');
+    signUpTabButton.classList.remove('border-purple-500');
+    signUpTabButton.classList.add('text-gray-400', 'hover:text-white');
+    signInForm.classList.remove('hidden');
+    signUpForm.classList.add('hidden');
+    signInError.textContent = '';
+    signUpError.textContent = '';
+  });
+}
+
+if (closeAuthModal) {
+  closeAuthModal.addEventListener('click', () => {
+    authModal.classList.add('hidden');
+  });
+}
+
+// Close modal if clicked outside the content
+if (authModal) {
+  authModal.addEventListener('click', (e) => {
+    if (e.target === authModal) {
+      authModal.classList.add('hidden');
+    }
+  });
+}
+
+if (signInTabButton) {
+  signInTabButton.addEventListener('click', () => {
+    authModalTitle.textContent = 'Sign In';
+    signInTabButton.classList.add('border-purple-500');
+    signInTabButton.classList.remove('text-gray-400', 'hover:text-white');
+    signUpTabButton.classList.remove('border-purple-500');
+    signUpTabButton.classList.add('text-gray-400', 'hover:text-white');
+    signInForm.classList.remove('hidden');
+    signUpForm.classList.add('hidden');
+    signInError.textContent = '';
+    signUpError.textContent = '';
+  });
+}
+
+if (signUpTabButton) {
+  signUpTabButton.addEventListener('click', () => {
+    authModalTitle.textContent = 'Sign Up';
+    signUpTabButton.classList.add('border-purple-500');
+    signUpTabButton.classList.remove('text-gray-400', 'hover:text-white');
+    signInTabButton.classList.remove('border-purple-500');
+    signInTabButton.classList.add('text-gray-400', 'hover:text-white');
+    signUpForm.classList.remove('hidden');
+    signInForm.classList.add('hidden');
+    signInError.textContent = '';
+    signUpError.textContent = '';
+  });
+}
+
+if (signInForm) {
+  signInForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    signInError.textContent = '';
+    const formData = new FormData(signInForm);
+    const data = Object.fromEntries(formData.entries());
+
+    try {
+      const response = await fetch('/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+      const result = await response.json();
+      if (response.ok) {
+        signInError.textContent = 'Sign in successful! Redirecting...';
+        window.location.reload(); // Or redirect to a dashboard page
+      } else {
+        signInError.textContent = result.message || 'Sign in failed. Please try again.';
+      }
+    } catch (error) {
+      console.error('Sign in error:', error);
+      signInError.textContent = 'An error occurred. Please try again.';
+    }
+  });
+}
+
+if (signUpForm) {
+  signUpForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    signUpError.textContent = '';
+    const formData = new FormData(signUpForm);
+    const data = Object.fromEntries(formData.entries());
+
+    try {
+      const response = await fetch('/auth/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+      const result = await response.json();
+      if (response.ok) {
+        signUpError.textContent = 'Sign up successful! Please sign in.';
+        // Switch to sign-in tab
+        authModalTitle.textContent = 'Sign In';
+        signInTabButton.classList.add('border-purple-500');
+        signInTabButton.classList.remove('text-gray-400', 'hover:text-white');
+        signUpTabButton.classList.remove('border-purple-500');
+        signUpTabButton.classList.add('text-gray-400', 'hover:text-white');
+        signInForm.classList.remove('hidden');
+        signUpForm.classList.add('hidden');
+        signInError.textContent = ''; // Clear sign-in error too
+        document.getElementById('signInEmail').focus(); // Focus on sign-in email
+      } else {
+        signUpError.textContent = result.message || 'Sign up failed. Please try again.';
+      }
+    } catch (error) {
+      console.error('Sign up error:', error);
+      signUpError.textContent = 'An error occurred. Please try again.';
+    }
+  });
 }
 
 // Real-time AI Market Trend Graph
@@ -344,107 +450,6 @@ function initVideoBackground() {
 // Initialize video background when page loads
 window.addEventListener('load', initVideoBackground);
 
-// Initialize Three.js for the logo - with proper lazy loading
-function initLogoCanvas() {
-  // Create a new canvas element for the 3D logo
-  const logoCanvas = document.createElement('canvas');
-  logoCanvas.id = 'logo-canvas';
-  logoCanvas.width = 100;
-  logoCanvas.height = 100;
-  logoCanvas.style.display = 'block';
-  
-  // Reposition the 3D logo under the TumzyTech header
-  const header = document.querySelector('nav');
-  if (!header) return; // Safety check
-  
-  const logoCanvasContainer = document.createElement('div');
-  logoCanvasContainer.style.position = 'relative';
-  logoCanvasContainer.style.margin = '0 auto';
-  logoCanvasContainer.style.width = '100px';
-  logoCanvasContainer.style.height = '100px';
-  logoCanvasContainer.style.display = 'flex';
-  logoCanvasContainer.style.justifyContent = 'center';
-  logoCanvasContainer.style.alignItems = 'center';
-  logoCanvasContainer.appendChild(logoCanvas);
-  header.insertAdjacentElement('afterend', logoCanvasContainer);
-  
-  // Set up Three.js renderer
-  const logoRenderer = new THREE.WebGLRenderer({ canvas: logoCanvas, antialias: true, alpha: true });
-  logoRenderer.setSize(logoCanvas.clientWidth, logoCanvas.clientHeight);
-  
-  const logoScene = new THREE.Scene();
-  const logoCamera = new THREE.PerspectiveCamera(75, logoCanvas.clientWidth / logoCanvas.clientHeight, 0.1, 1000);
-  logoCamera.position.z = 2;
-
-  // Add lighting to the logo scene
-  const logoLight = new THREE.DirectionalLight(0xffffff, 1);
-  logoLight.position.set(5, 5, 5).normalize();
-  logoScene.add(logoLight);
-
-  let logoModel = null;
-
-  // Load the 3D model for the logo with a loading indicator
-  const loadingIndicator = document.createElement('div');
-  loadingIndicator.style.position = 'absolute';
-  loadingIndicator.style.top = '50%';
-  loadingIndicator.style.left = '50%';
-  loadingIndicator.style.transform = 'translate(-50%, -50%)';
-  loadingIndicator.style.color = '#ffffff';
-  loadingIndicator.style.fontSize = '12px';
-  loadingIndicator.textContent = 'Loading...';
-  logoCanvasContainer.appendChild(loadingIndicator);
-
-  const logoLoader = new THREE.GLTFLoader();
-  logoLoader.load('assets/pictures/flying.glb', function (gltf) {
-    logoModel = gltf.scene;
-    logoScene.add(logoModel);
-
-    // Adjust the model's position and scale for the logo
-    logoModel.position.set(0, -0.5, 0);
-    logoModel.scale.set(0.5, 0.5, 0.5);
-
-    // Animation loop for the logo
-    function animateLogo() {
-      requestAnimationFrame(animateLogo);
-      if (logoModel) {
-        logoModel.rotation.y += 0.01; // Rotate the model for animation
-      }
-      logoRenderer.render(logoScene, logoCamera);
-    }
-    
-    // Remove loading indicator once loaded
-    logoCanvasContainer.removeChild(loadingIndicator);
-    animateLogo();
-
-    // Add mouse movement interaction for dynamic rotation
-    window.addEventListener('mousemove', (event) => {
-      if (!logoModel) return;
-      const x = (event.clientX / window.innerWidth - 0.5) * 2;
-      const y = (event.clientY / window.innerHeight - 0.5) * 2;
-      logoModel.rotation.x = y * 0.5;
-      logoModel.rotation.y = x * 0.5;
-    });
-    
-    console.log('3D logo loaded successfully');
-  }, function (xhr) {
-    const percent = xhr.loaded / xhr.total * 100;
-    loadingIndicator.textContent = `Loading: ${percent.toFixed(0)}%`;
-    console.log(`Loading progress: ${percent.toFixed(2)}% loaded`);
-  }, function (error) {
-    console.error('Failed to load the 3D model:', error);
-    loadingIndicator.textContent = 'Failed to load 3D model';
-    loadingIndicator.style.color = '#ff5555';
-  });
-}
-
-// Initialize the 3D logo after the page content has loaded
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', initLogoCanvas);
-} else {
-  // If DOMContentLoaded has already fired
-  initLogoCanvas();
-}
-
 // Enhanced lazy loading for all media elements
 function setupLazyLoading() {
   // Set up Intersection Observer to load elements when they're about to enter viewport
@@ -546,47 +551,171 @@ if (modelViewer) {
   });
 }
 
-// Pi Network Integration
-const Pi = window.Pi;
+function initLogoCanvas() {  // Create a new canvas element for the 3D logo
+  const logoCanvas = document.createElement('canvas');
+  logoCanvas.id = 'logo-canvas';
+  logoCanvas.width = 180;
+  logoCanvas.height = 160;
+  logoCanvas.style.display = 'block';
+  
+  // Reposition the 3D logo under the TumzyTech header
+  const header = document.querySelector('nav');
+  if (!header) return; // Safety check
+    const logoCanvasContainer = document.createElement('div');  logoCanvasContainer.style.position = 'relative';
+  logoCanvasContainer.style.margin = '0 auto';  
+  logoCanvasContainer.style.width = '180px';
+  logoCanvasContainer.style.height = '160px';
+  logoCanvasContainer.style.display = 'flex';
+  logoCanvasContainer.style.justifyContent = 'center';
+  logoCanvasContainer.style.alignItems = 'center';
+  logoCanvasContainer.style.marginTop = '-80px'; // Move the logo higher up
+  logoCanvasContainer.appendChild(logoCanvas);
+  header.insertAdjacentElement('afterend', logoCanvasContainer);
+  
+  // Set up Three.js renderer
+  const logoRenderer = new THREE.WebGLRenderer({ canvas: logoCanvas, antialias: true, alpha: true });
+  logoRenderer.setSize(logoCanvas.clientWidth, logoCanvas.clientHeight);
+  
+  const logoScene = new THREE.Scene();
+  const logoCamera = new THREE.PerspectiveCamera(75, logoCanvas.clientWidth / logoCanvas.clientHeight, 0.1, 1000);
+  logoCamera.position.z = 2;
 
-// Initialize Pi SDK with sandbox mode
-Pi.init({ version: "2.0", sandbox: true });
+  // Add lighting to the logo scene
+  const logoLight = new THREE.DirectionalLight(0xffffff, 1);
+  logoLight.position.set(5, 5, 5).normalize();
+  logoScene.add(logoLight);
 
-// Handle Pi payments
-async function handlePiPayment() {
-  try {
-    // 1. Authenticate user
-    const auth = await Pi.authenticate(['payments'], onIncompletePaymentFound);
-    if (!auth) {
-      throw new Error('User cancelled authentication');
+  let logoModel = null;
+
+  const logoLoader = new THREE.GLTFLoader();
+  logoLoader.load('assets/pictures/flying.glb', function (gltf) {
+    logoModel = gltf.scene;
+    logoScene.add(logoModel);
+
+    // Adjust the model's position and scale for the logo
+    logoModel.position.set(0, -0.5, 0);
+    logoModel.scale.set(0.75, 0.75, 0.75);
+
+    // Animation loop for the logo
+    function animateLogo() {
+      requestAnimationFrame(animateLogo);
+      if (logoModel) {
+        logoModel.rotation.y += 0.01; // Rotate the model for animation
+      }
+      logoRenderer.render(logoScene, logoCamera);
     }
+    
+    animateLogo();
 
-    // 2. Create payment
-    const payment = await Pi.createPayment({
-      amount: 0.5,
-      memo: "TumzyTech AI Tool Access",
-      metadata: { productId: "ai-tools-access" }
+  });
+
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  const hamburger = document.querySelector('.hamburger');
+  const navLinks = document.querySelector('.nav-links');
+
+  if (hamburger && navLinks) {
+    hamburger.addEventListener('click', () => {
+      navLinks.classList.toggle('active');
+      hamburger.classList.toggle('active'); // Toggle active class on hamburger for animation
+      console.log('Hamburger clicked, nav-links active:', navLinks.classList.contains('active'));
     });
 
-    // 3. Handle payment result
-    if (payment.status === 'completed') {
-      alert('Payment successful! Redirecting to chat...');
-      window.location.href = '/chat.html';
-    } else {
-      alert('Payment incomplete. Please try again.');
-    }
+    // Add event listener to close menu when clicking outside
+    document.addEventListener('click', (event) => {
+      const isClickInsideNav = navLinks.contains(event.target);
+      const isClickOnHamburger = hamburger.contains(event.target);
 
+      if (navLinks.classList.contains('active') && !isClickInsideNav && !isClickOnHamburger) {
+        navLinks.classList.remove('active');
+        hamburger.classList.remove('active');
+        console.log('Clicked outside, nav-links active:', navLinks.classList.contains('active'));
+      }
+    });
+  }
+
+  // Parallax effect (ensure elements exist)
+  const parallaxElements = document.querySelectorAll(".parallax");
+  if (parallaxElements.length > 0) {
+    document.addEventListener("mousemove", (event) => {
+        const x = event.clientX / window.innerWidth - 0.5;
+        const y = event.clientY / window.innerHeight - 0.5;
+
+        parallaxElements.forEach((element) => {
+            const speed = element.getAttribute("data-speed") || 1; // Default speed if not set
+            element.style.transform = `translate(${x * speed * 20}px, ${y * speed * 20}px)`;
+        });
+    });
+  }
+
+  // Initialize 3D logo
+  initLogoCanvas();
+});
+
+// Ensure checkAuthStatus is defined and called after DOM is loaded.
+async function checkAuthStatus() {
+  try {
+    const response = await fetch('/auth/status');
+    if (!response.ok) {
+        console.warn('Auth status check failed with status:', response.status);
+        const authStatusElement = document.getElementById('auth-status');
+        if (authStatusElement) {
+            authStatusElement.textContent = 'Session expired';
+        }
+        return;
+    }
+    const data = await response.json();
+    const authStatusElement = document.getElementById('auth-status');
+
+    if (authStatusElement) {
+      if (data.isAuthenticated && data.user) {
+        authStatusElement.textContent = `Welcome, ${data.user.name}`;
+        if(authModalLink) authModalLink.style.display = 'none';
+        let logoutLink = document.getElementById('logoutLink');
+        if (!logoutLink) {
+            const navLinks = document.querySelector('.nav-links');
+            if (navLinks) {
+                const listItem = document.createElement('li');
+                logoutLink = document.createElement('a');
+                logoutLink.href = '#';
+                logoutLink.id = 'logoutLink';
+                logoutLink.textContent = 'Logout';
+                logoutLink.addEventListener('click', async (e) => {
+                    e.preventDefault();
+                    try {
+                        await fetch('/auth/logout', { method: 'POST' });
+                        window.location.reload();
+                    } catch (err) {
+                        console.error('Logout failed:', err);
+                    }
+                });
+                listItem.appendChild(logoutLink);
+                const authStatusLi = authStatusElement.closest('li');
+                if (authStatusLi && authStatusLi.parentNode) {
+                    authStatusLi.parentNode.insertBefore(listItem, authStatusLi.nextSibling);
+                } else {
+                    navLinks.appendChild(listItem);
+                }
+            }
+        }
+        logoutLink.style.display = 'inline';
+      } else {
+        authStatusElement.textContent = '';
+        if(authModalLink) authModalLink.style.display = 'inline';
+        const logoutLink = document.getElementById('logoutLink');
+        if(logoutLink) logoutLink.style.display = 'none';
+      }
+    }
   } catch (error) {
-    console.error('Payment error:', error);
-    alert('Payment failed: ' + error.message);
+    console.error('Error checking authentication status:', error);
+    const authStatusElement = document.getElementById('auth-status');
+    if (authStatusElement) {
+      authStatusElement.textContent = 'Error checking status';
+    }
   }
 }
 
-// Handle incomplete payments
-function onIncompletePaymentFound(payment) {
-  console.log("Incomplete payment found:", payment);
-  return handlePiPayment();
-}
-
-// Payment functionality has been moved to the chat.html page
-// No need to attach event listeners for payWithPi here
+document.addEventListener('DOMContentLoaded', () => {
+  checkAuthStatus();
+});

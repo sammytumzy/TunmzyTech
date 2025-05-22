@@ -444,6 +444,7 @@ img, video {
   width: 100%; /* Ensure the navbar spans the full width */
   background-color: #0f0f1b; /* Retain the black background */
   padding: 16px 32px; /* Ensure consistent padding for the navbar */
+  z-index: 1000; /* Ensure navbar is above other content */
 }
 
 /* Add padding to footer */
@@ -458,6 +459,11 @@ img, video {
   body {
     background-size: contain; /* Ensure the robot image fits within the screen */
     background-position: top center; /* Center the image for better visibility */
+  }
+
+  /* Ensure mobile navigation menu is above other elements */
+  .nav-links.active {
+    z-index: 1001; /* Higher than navbar and logo canvas */
   }
 }
 

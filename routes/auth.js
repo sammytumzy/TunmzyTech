@@ -18,6 +18,17 @@ router.get('/google/callback', passport.authenticate('google', {
   res.json({ token });
 });
 
+// Get authentication status
+router.get('/status', (req, res) => {
+  res.json({
+    isAuthenticated: req.isAuthenticated(),
+    user: req.user ? {
+      name: req.user.name,
+      email: req.user.email
+    } : null
+  });
+});
+
 // Logout
 router.get('/logout', (req, res) => {
   req.logout(err => {
