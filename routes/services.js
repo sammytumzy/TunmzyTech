@@ -1,33 +1,20 @@
 const express = require('express');
 const router = express.Router();
 const { ensureAuthenticated } = require('../middlewares/auth');
-const User = require('../models/User');
+const aiServicesController = require('../controllers/aiServicesController');
 
-// Example service endpoint
+// Welcome endpoint
 router.get('/', ensureAuthenticated, (req, res) => {
-  res.json({ message: 'Welcome to the services API!' });
+  res.json({ message: 'Welcome to the TumzyTech AI services API!' });
 });
 
 // Chatbot endpoint
-router.post('/chatbot', ensureAuthenticated, async (req, res) => {
-  try {
-    const { message } = req.body;
-    if (!message) {
-      return res.status(400).json({ error: 'Message is required' });
-    }
+router.post('/chatbot', ensureAuthenticated, aiServicesController.chatbot);
 
-    // Simple response for now
-    res.json({
-      response: "Thank you for your message. The chatbot service is being reconfigured."
-    });
+// Image generation endpoint
+router.post('/generate-image', ensureAuthenticated, aiServicesController.generateImage);
 
-  } catch (error) {
-    console.error('Error in chatbot service:', error);
-    res.status(500).json({ 
-      error: 'Internal server error',
-      message: error.message 
-    });
-  }
-});
+// User stats endpoint
+router.get('/user-stats', ensureAuthenticated, aiServicesController.getUserStats);
 
 module.exports = router;

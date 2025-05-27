@@ -18,7 +18,10 @@ const allowedOrigins = [
   'http://localhost:5500',
   'http://localhost:5000',
   'http://127.0.0.1:5000',
-  'https://tumzytech.com'
+  'http://localhost:3000', // React development server
+  'http://127.0.0.1:3000',
+  'https://tumzytech.com',
+  'https://fast-areas-shave.loca.lt' // New localtunnel URL
 ];
 
 app.use(cors({
@@ -66,10 +69,19 @@ app.use('/assets', express.static(path.join(__dirname, 'assets')));
 // Routes
 app.use('/auth', authRoutes);
 app.use('/api/services', servicesRoutes);
-app.use('/api/pi-payments', piPaymentRoutes); // Used Pi Payment Routes with a base path
+app.use('/api/payments', piPaymentRoutes); // Fixed to match frontend calls
 
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'index.html'));
+});
+
+// API status endpoint
+app.get('/api/', (req, res) => {
+  res.json({
+    success: true,
+    message: 'TumzyTech API is running',
+    timestamp: new Date().toISOString()
+  });
 });
 
 app.get('/chat.html', (req, res) => {
@@ -82,6 +94,10 @@ app.get('/privacy.html', (req, res) => {
 
 app.get('/terms.html', (req, res) => {
   res.sendFile(path.join(__dirname, 'terms.html'));
+});
+
+app.get('/callback.html', (req, res) => {
+  res.sendFile(path.join(__dirname, 'callback.html'));
 });
 
 // Error handling
@@ -107,6 +123,19 @@ mongoose.connect(process.env.MONGO_URI)
   .then(() => console.log('Connected to MongoDB'))
   .catch(err => console.error('MongoDB connection error:', err));
 
-app.listen(PORT, () => {
+// Start the server
+const server = app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
 });
+
+// Set up localtunnel for HTTPS access
+if (process.env.NODE_ENV !== 'production') {
+  const setupTunnel = require('./config/tunnel');
+  setupTunnel()
+    .then(tunnel => {
+      console.log(`Localtunnel established at ${tunnel.url}`);
+    })
+    .catch(err => {
+      console.error('Error setting up localtunnel:', err);
+    });
+}

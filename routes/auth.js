@@ -1,6 +1,8 @@
 const express = require('express');
 const passport = require('passport');
 const jwt = require('jsonwebtoken');
+const axios = require('axios');
+const User = require('../models/User');
 
 const router = express.Router();
 
@@ -13,9 +15,15 @@ router.get('/google', passport.authenticate('google', {
 router.get('/google/callback', passport.authenticate('google', {
   failureRedirect: '/login',
 }), (req, res) => {
-  // Generate JWT
-  const token = jwt.sign({ id: req.user.id }, process.env.JWT_SECRET, { expiresIn: '1h' });
-  res.json({ token });
+  // Generate JWT with more user information
+  const token = jwt.sign({ 
+    id: req.user.id,
+    name: req.user.name,
+    email: req.user.email
+  }, process.env.JWT_SECRET, { expiresIn: '24h' });
+  
+  // Redirect to frontend with token
+  res.redirect(`/callback.html?token=${token}`);
 });
 
 // Get authentication status
@@ -27,6 +35,70 @@ router.get('/status', (req, res) => {
       email: req.user.email
     } : null
   });
+});
+
+// Pi Network authentication verification
+router.post('/verify', async (req, res) => {
+  try {
+    const { accessToken } = req.body;
+    
+    if (!accessToken) {
+      return res.status(400).json({
+        success: false,
+        message: 'Access token is required'
+      });
+    }
+
+    // Verify the access token with Pi Network API
+    const piResponse = await axios.get('https://api.minepi.com/v2/me', {
+      headers: {
+        'Authorization': `Bearer ${accessToken}`
+      }
+    });
+
+    const piUser = piResponse.data;
+    
+    // Find or create user in our database
+    let user = await User.findOne({ piUserId: piUser.uid });
+    
+    if (!user) {
+      user = new User({
+        piUserId: piUser.uid,
+        username: piUser.username,
+        name: piUser.username || 'Pi User',
+        email: `${piUser.username}@pi.network`,
+        authProvider: 'pi'
+      });
+      await user.save();
+    }
+
+    // Generate JWT token
+    const token = jwt.sign({
+      id: user._id,
+      name: user.name,
+      username: user.username,
+      piUserId: user.piUserId
+    }, process.env.JWT_SECRET, { expiresIn: '24h' });
+
+    res.json({
+      success: true,
+      user: {
+        uid: user.piUserId,
+        username: user.username,
+        name: user.name,
+        isPremium: user.isPremium
+      },
+      token
+    });
+
+  } catch (error) {
+    console.error('Pi authentication verification failed:', error);
+    res.status(401).json({
+      success: false,
+      message: 'Invalid Pi Network access token',
+      error: error.response?.data || error.message
+    });
+  }
 });
 
 // Logout
