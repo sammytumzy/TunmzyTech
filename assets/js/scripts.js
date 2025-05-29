@@ -637,67 +637,51 @@ async function checkAuthStatus() {
   try {
     // For GitHub Pages, check localStorage instead of server endpoint
     const user = localStorage.getItem('currentUser');
+    const piUser = localStorage.getItem('piUser');
     const authStatusElement = document.getElementById('auth-status');
+    const authModalLink = document.getElementById('authModalLink');
     
-    if (user) {
-      const userData = JSON.parse(user);
+    if (user || piUser) {
+      const userData = user ? JSON.parse(user) : JSON.parse(piUser);
       if (authStatusElement) {
-        authStatusElement.textContent = `Welcome, ${userData.name || userData.email}`;
+        authStatusElement.textContent = `Welcome, ${userData.name || userData.email || userData.username}`;
       }
+      if (authModalLink) authModalLink.style.display = 'none';
+      
+      // Add logout functionality
+      let logoutLink = document.getElementById('logoutLink');
+      if (!logoutLink) {
+        const navLinks = document.querySelector('.nav-links');
+        if (navLinks) {
+          const listItem = document.createElement('li');
+          logoutLink = document.createElement('a');
+          logoutLink.href = '#';
+          logoutLink.id = 'logoutLink';
+          logoutLink.textContent = 'Logout';
+          logoutLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            localStorage.removeItem('currentUser');
+            localStorage.removeItem('piUser');
+            window.location.reload();
+          });
+          listItem.appendChild(logoutLink);
+          navLinks.appendChild(listItem);
+        }
+      }
+      if (logoutLink) logoutLink.style.display = 'inline';
     } else {
       if (authStatusElement) {
         authStatusElement.textContent = '';
       }
-    }
-    return;
-    }
-    const data = await response.json();
-    const authStatusElement = document.getElementById('auth-status');
-
-    if (authStatusElement) {
-      if (data.isAuthenticated && data.user) {
-        authStatusElement.textContent = `Welcome, ${data.user.name}`;
-        if(authModalLink) authModalLink.style.display = 'none';
-        let logoutLink = document.getElementById('logoutLink');
-        if (!logoutLink) {
-            const navLinks = document.querySelector('.nav-links');
-            if (navLinks) {
-                const listItem = document.createElement('li');
-                logoutLink = document.createElement('a');
-                logoutLink.href = '#';
-                logoutLink.id = 'logoutLink';
-                logoutLink.textContent = 'Logout';
-                logoutLink.addEventListener('click', async (e) => {
-                    e.preventDefault();
-                    try {
-                        await fetch('/auth/logout', { method: 'POST' });
-                        window.location.reload();
-                    } catch (err) {
-                        console.error('Logout failed:', err);
-                    }
-                });
-                listItem.appendChild(logoutLink);
-                const authStatusLi = authStatusElement.closest('li');
-                if (authStatusLi && authStatusLi.parentNode) {
-                    authStatusLi.parentNode.insertBefore(listItem, authStatusLi.nextSibling);
-                } else {
-                    navLinks.appendChild(listItem);
-                }
-            }
-        }
-        logoutLink.style.display = 'inline';
-      } else {
-        authStatusElement.textContent = '';
-        if(authModalLink) authModalLink.style.display = 'inline';
-        const logoutLink = document.getElementById('logoutLink');
-        if(logoutLink) logoutLink.style.display = 'none';
-      }
+      if (authModalLink) authModalLink.style.display = 'inline';
+      const logoutLink = document.getElementById('logoutLink');
+      if (logoutLink) logoutLink.style.display = 'none';
     }
   } catch (error) {
     console.error('Error checking authentication status:', error);
     const authStatusElement = document.getElementById('auth-status');
     if (authStatusElement) {
-      authStatusElement.textContent = 'Error checking status';
+      authStatusElement.textContent = '';
     }
   }
 }
