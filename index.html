@@ -12,9 +12,9 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.5.2/css/all.min.css">
   <!-- Google Fonts (Inter) -->
   <link href="https://cdn.jsdelivr.net/npm/@fontsource/inter@4.5.0/index.min.css" rel="stylesheet">  <!-- Chart.js 4.4.3 for visualization -->
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
-  <link rel="stylesheet" href="assets/css/styles.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>  <link rel="stylesheet" href="assets/css/styles.css">
   <script src="assets/js/page-loader.js"></script>
+  <script src="assets/js/error-handler.js"></script>
   <script src="assets/js/scripts.js" defer></script>
   <!-- Favicon and Manifest links (Corrected paths) -->
   <link rel="icon" href="assets/pictures/favicon/favicon.ico" type="image/x-icon">
@@ -717,7 +717,7 @@
       <p class="mb-8 text-gray-200">
         Ready to unlock your goals with TumzyTech's AI solutions? Let's connect and power your project with the latest in artificial intelligence.
       </p>
-      <form class="space-y-5" method="POST" action="mailto:contact@tumzytech.com" enctype="text/plain">
+      <form class="space-y-5" id="contactForm" onsubmit="handleContactForm(event)">
         <div class="flex gap-3">
           <input type="text" name="Name" id="name" autocomplete="name" required class="flex-1 px-3 py-2 rounded-md bg-gray-800 text-white border border-gray-700 focus:border-cyan-400 transition focus:outline-none" placeholder="Your Name">
           <input type="email" name="Email" id="email" autocomplete="email" required class="flex-1 px-3 py-2 rounded-md bg-gray-800 text-white border border-gray-700 focus:border-cyan-400 transition focus:outline-none" placeholder="Your Email">

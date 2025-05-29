@@ -1,3 +1,21 @@
+// Check if Pi Network environment is available
+function checkPiEnvironment() {
+    if (typeof Pi === 'undefined') {
+        console.warn('Pi SDK not available - not in Pi Browser environment');
+        return false;
+    }
+    
+    // Check user agent for Pi Browser
+    const userAgent = navigator.userAgent.toLowerCase();
+    const isPiBrowser = userAgent.includes('pi browser') || userAgent.includes('pi network');
+    
+    if (!isPiBrowser) {
+        console.warn('Not detected as Pi Browser - payments may not work');
+    }
+    
+    return true;
+}
+
 // Wait for the DOM to be fully loaded before trying to interact with it
 document.addEventListener('DOMContentLoaded', async (event) => {
     // Initialize Pi SDK
@@ -16,11 +34,29 @@ document.addEventListener('DOMContentLoaded', async (event) => {
     // Main payment handling function
     async function handlePayment(incompletePiPayment) {
         try {
+            // Check if Pi SDK is available
+            if (typeof Pi === 'undefined') {
+                console.error('Pi SDK not loaded');
+                alert('Pi Network SDK not available. Please try again later.');
+                return;
+            }
+
             // First authenticate the user
             const scopes = ['payments'];
             console.log("Authenticating user...");
-            const auth = await Pi.authenticate(scopes, onIncompletePaymentFound);
-            console.log("User authenticated:", auth);
+            
+            try {
+                const auth = await Pi.authenticate(scopes, onIncompletePaymentFound);
+                console.log("User authenticated:", auth);
+                
+                // Store authentication info
+                localStorage.setItem('piUser', JSON.stringify(auth.user));
+                
+            } catch (authError) {
+                console.error('Authentication failed:', authError);
+                alert('Authentication failed. Please ensure you have Pi Browser or Pi Network app.');
+                return;
+            }
 
             // Payment variables
             const paymentData = {
@@ -83,14 +119,28 @@ document.addEventListener('DOMContentLoaded', async (event) => {
     if (chatContainer) {
         const payButton = document.createElement('button');
         payButton.textContent = 'Unlock Premium Features (1 Pi)';
-        payButton.className = 'mt-4 px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-700 transition';
-        payButton.onclick = async function() {
+        payButton.className = 'mt-4 px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-700 transition';        payButton.onclick = async function() {
             try {
                 console.log("Payment button clicked");
+                
+                // Prevent multiple clicks
+                if (payButton.disabled) {
+                    console.log("Payment already in progress");
+                    return;
+                }
+                
+                payButton.disabled = true;
+                payButton.textContent = 'Processing...';
+                
                 await handlePayment();
+                
             } catch (error) {
                 console.error('Payment error:', error);
                 alert('Payment failed: ' + error.message);
+            } finally {
+                // Re-enable button after process completes
+                payButton.disabled = false;
+                payButton.textContent = 'Unlock Premium Features (1 Pi)';
             }
         };
         chatContainer.appendChild(payButton);

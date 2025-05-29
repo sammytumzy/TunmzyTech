@@ -26,8 +26,8 @@ assets/videos/
 **/robot_playground_backup.glb
 **/typescript.js
 **/_tsc.js
-# Images larger than 5MB
-**/aihelphuman.jpg
+# Keep smaller images and essential assets, exclude problematic large ones
+robot_playground_backup.glb
 
 # Logs
 logs

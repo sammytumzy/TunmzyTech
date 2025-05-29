@@ -398,57 +398,36 @@ function initVideoBackground() {
     document.body.appendChild(videoBackground);
   }
   
-  // Create video element
-  const video = document.createElement('video');
-  video.autoplay = true;
-  video.muted = true;
-  video.loop = true;
-  video.playsInline = true; // Better mobile support
-  video.setAttribute('preload', 'auto');
+  // Create gradient background instead of video
+function initGradientBackground() {
+  const videoBackground = document.getElementById('video-background');
+  if (!videoBackground) return;
   
-  // Add loading indicator
-  const loadingIndicator = document.createElement('div');
-  loadingIndicator.style.position = 'absolute';
-  loadingIndicator.style.top = '10px';
-  loadingIndicator.style.right = '10px';
-  loadingIndicator.style.background = 'rgba(0,0,0,0.5)';
-  loadingIndicator.style.color = 'white';
-  loadingIndicator.style.padding = '5px';
-  loadingIndicator.style.borderRadius = '3px';
-  loadingIndicator.style.fontSize = '12px';
-  loadingIndicator.textContent = 'Loading background...';
-  videoBackground.appendChild(loadingIndicator);
+  // Create animated gradient background
+  videoBackground.style.background = 'linear-gradient(-45deg, #667eea, #764ba2, #667eea, #764ba2)';
+  videoBackground.style.backgroundSize = '400% 400%';
+  videoBackground.style.animation = 'gradientShift 15s ease infinite';
+  videoBackground.style.display = 'block';
   
-  // Add source element
-  const source = document.createElement('source');
-  source.src = 'assets/videos/background-video.mp4';
-  source.type = 'video/mp4';
-    // When video can play, show the container
-  video.addEventListener('canplaythrough', () => {
-    videoBackground.style.display = 'block';
-    videoBackground.classList.add('loaded'); // Add loaded class for fade-in effect
-    if (videoBackground.contains(loadingIndicator)) {
-      videoBackground.removeChild(loadingIndicator);
-    }
-    console.log('Video background loaded successfully');
-  });
+  // Add CSS animation if not already present
+  if (!document.getElementById('gradient-animation-styles')) {
+    const style = document.createElement('style');
+    style.id = 'gradient-animation-styles';
+    style.textContent = `
+      @keyframes gradientShift {
+        0% { background-position: 0% 50%; }
+        50% { background-position: 100% 50%; }
+        100% { background-position: 0% 50%; }
+      }
+    `;
+    document.head.appendChild(style);
+  }
   
-  // Error handling
-  video.addEventListener('error', (e) => {
-    console.error('Error loading video background:', e);
-    if (loadingIndicator) {
-      loadingIndicator.textContent = 'Failed to load background';
-      loadingIndicator.style.color = '#ff5555';
-    }
-  });
-  
-  // Append elements
-  video.appendChild(source);
-  videoBackground.appendChild(video);
+  console.log('Gradient background initialized successfully');
 }
 
-// Initialize video background when page loads
-window.addEventListener('load', initVideoBackground);
+// Initialize gradient background when page loads
+window.addEventListener('load', initGradientBackground);
 
 // Enhanced lazy loading for all media elements
 function setupLazyLoading() {
@@ -656,14 +635,21 @@ document.addEventListener('DOMContentLoaded', () => {
 // Ensure checkAuthStatus is defined and called after DOM is loaded.
 async function checkAuthStatus() {
   try {
-    const response = await fetch('/auth/status');
-    if (!response.ok) {
-        console.warn('Auth status check failed with status:', response.status);
-        const authStatusElement = document.getElementById('auth-status');
-        if (authStatusElement) {
-            authStatusElement.textContent = 'Session expired';
-        }
-        return;
+    // For GitHub Pages, check localStorage instead of server endpoint
+    const user = localStorage.getItem('currentUser');
+    const authStatusElement = document.getElementById('auth-status');
+    
+    if (user) {
+      const userData = JSON.parse(user);
+      if (authStatusElement) {
+        authStatusElement.textContent = `Welcome, ${userData.name || userData.email}`;
+      }
+    } else {
+      if (authStatusElement) {
+        authStatusElement.textContent = '';
+      }
+    }
+    return;
     }
     const data = await response.json();
     const authStatusElement = document.getElementById('auth-status');
@@ -719,3 +705,33 @@ async function checkAuthStatus() {
 document.addEventListener('DOMContentLoaded', () => {
   checkAuthStatus();
 });
+
+// Contact form handler function
+function handleContactForm(event) {
+  event.preventDefault();
+  
+  const formData = new FormData(event.target);
+  const name = formData.get('Name');
+  const email = formData.get('Email');
+  const message = formData.get('Message');
+  
+  // Create mailto link with form data
+  const subject = encodeURIComponent('Contact Form Submission from TumzyTech');
+  const body = encodeURIComponent(`Name: ${name}\nEmail: ${email}\n\nMessage:\n${message}`);
+  const mailtoLink = `mailto:contact@tumzytech.com?subject=${subject}&body=${body}`;
+  
+  // Open user's email client
+  window.location.href = mailtoLink;
+  
+  // Show success message
+  const button = event.target.querySelector('button[type="submit"]');
+  const originalText = button.textContent;
+  button.textContent = 'Opening Email Client...';
+  button.disabled = true;
+  
+  setTimeout(() => {
+    button.textContent = originalText;
+    button.disabled = false;
+    event.target.reset();
+  }, 2000);
+}
