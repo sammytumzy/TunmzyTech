@@ -258,14 +258,13 @@ class ErrorHandler {
     
     window.addEventListener('offline', () => {
       console.log('Connection lost');
-      this.showErrorNotification('Connection lost. Some features may be unavailable.', 'warning');
+          this.showErrorNotification('Connection lost. Some features may be unavailable.', 'warning');
     });
   }
 }
 
 // Initialize error handler
 new ErrorHandler();
-});
 
 // Add CSS for gradient animation if not present
 if (!document.getElementById('gradient-animation-styles')) {

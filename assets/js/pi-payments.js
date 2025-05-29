@@ -21,38 +21,65 @@ class PiPaymentManager {
             this.initialize();
         }
     }
-    
-    checkPiBrowserEnvironment() {
+      checkPiBrowserEnvironment() {
         const userAgent = navigator.userAgent.toLowerCase();
-        return userAgent.includes('pi browser') || userAgent.includes('pi network') || window.location.hostname === 'localhost';
-    }
-    
-    async initialize() {
-        console.log('Initializing Pi Payment Manager...');
+        const isPiBrowser = userAgent.includes('pi browser') || userAgent.includes('pi network');
         
-        // Wait for Pi SDK to be available
-        if (typeof window.Pi === 'undefined') {
-            console.warn('Pi SDK not available. Payment features disabled.');
-            this.createFallbackButton();
-            return;
+        // For development/testing purposes, also allow localhost and github pages
+        const isDevelopment = window.location.hostname === 'localhost' || 
+                             window.location.hostname.includes('github.io') ||
+                             window.location.hostname.includes('127.0.0.1');
+        
+        if (!isPiBrowser && isDevelopment) {
+            console.warn('Development environment detected - Pi payments may not work fully');
         }
         
+        return isPiBrowser || isDevelopment;
+    }
+      async initialize() {
+        console.log('Initializing Pi Payment Manager...');
+        
+        // Wait for Pi SDK to be available with timeout
+        const waitForPiSDK = () => {
+            return new Promise((resolve, reject) => {
+                const timeout = setTimeout(() => {
+                    reject(new Error('Pi SDK loading timeout'));
+                }, 10000); // 10 second timeout
+                
+                const checkSDK = () => {
+                    if (typeof window.Pi !== 'undefined') {
+                        clearTimeout(timeout);
+                        resolve(window.Pi);
+                    } else {
+                        setTimeout(checkSDK, 100);
+                    }
+                };
+                checkSDK();
+            });
+        };
+        
         try {
-            // Initialize Pi SDK if not already done
+            await waitForPiSDK();
+            
+            // Initialize Pi SDK with proper error handling
             if (!window.Pi.isInitialized) {
-                await window.Pi.init({ version: "2.0", sandbox: true });
+                await Promise.race([
+                    window.Pi.init({ version: "2.0", sandbox: true }),
+                    new Promise((_, reject) => 
+                        setTimeout(() => reject(new Error('Pi SDK init timeout')), 15000)
+                    )
+                ]);
                 console.log('Pi SDK initialized successfully');
             }
             
             this.createPaymentButton();
             
         } catch (error) {
-            console.error('Failed to initialize Pi SDK:', error);
+            console.warn('Pi SDK initialization failed:', error.message);
             this.createFallbackButton();
         }
     }
-    
-    async authenticateUser() {
+      async authenticateUser() {
         if (this.isAuthenticated && this.userInfo) {
             console.log('User already authenticated');
             return this.userInfo;
@@ -62,7 +89,14 @@ class PiPaymentManager {
             console.log('Authenticating Pi user...');
             
             const scopes = ['payments'];
-            const authResult = await window.Pi.authenticate(scopes, this.onIncompletePaymentFound.bind(this));
+            
+            // Add timeout to authentication
+            const authResult = await Promise.race([
+                window.Pi.authenticate(scopes, this.onIncompletePaymentFound.bind(this)),
+                new Promise((_, reject) => 
+                    setTimeout(() => reject(new Error('Authentication timeout')), 30000)
+                )
+            ]);
             
             this.isAuthenticated = true;
             this.userInfo = authResult.user;
@@ -83,7 +117,14 @@ class PiPaymentManager {
             localStorage.removeItem('piUser');
             localStorage.removeItem('piAuthenticated');
             
-            throw new Error('Authentication failed. Please ensure you are using Pi Browser.');
+            // Handle specific error types
+            if (error.message.includes('timeout')) {
+                throw new Error('Authentication timed out. Please try again or ensure you are using Pi Browser.');
+            } else if (error.message.includes('User cancelled')) {
+                throw new Error('Authentication was cancelled.');
+            } else {
+                throw new Error('Authentication failed. Please ensure you are using Pi Browser.');
+            }
         }
     }
     
@@ -104,8 +145,7 @@ class PiPaymentManager {
             throw error;
         }
     }
-    
-    async createPayment() {
+      async createPayment() {
         try {
             // Ensure user is authenticated first
             await this.authenticateUser();
@@ -123,45 +163,57 @@ class PiPaymentManager {
             
             console.log('Creating Pi payment:', paymentData);
             
-            const payment = await window.Pi.createPayment(paymentData, {
-                onReadyForServerApproval: (paymentId) => {
-                    console.log('Payment ready for server approval:', paymentId);
-                    this.updateButtonText('Approving payment...');
+            // Add timeout to payment creation
+            const payment = await Promise.race([
+                window.Pi.createPayment(paymentData, {
+                    onReadyForServerApproval: (paymentId) => {
+                        console.log('Payment ready for server approval:', paymentId);
+                        this.updateButtonText('Approving payment...');
+                        
+                        // Simulate server approval for GitHub Pages (no backend)
+                        setTimeout(() => {
+                            console.log('Simulating server approval for payment:', paymentId);
+                        }, 1000);
+                    },
                     
-                    // Simulate server approval for GitHub Pages (no backend)
-                    setTimeout(() => {
-                        console.log('Simulating server approval for payment:', paymentId);
-                    }, 1000);
-                },
-                
-                onReadyForServerCompletion: (paymentId, txid) => {
-                    console.log('Payment ready for server completion:', paymentId, txid);
-                    this.updateButtonText('Completing payment...');
+                    onReadyForServerCompletion: (paymentId, txid) => {
+                        console.log('Payment ready for server completion:', paymentId, txid);
+                        this.updateButtonText('Completing payment...');
+                        
+                        // Simulate server completion for GitHub Pages
+                        setTimeout(() => {
+                            console.log('Simulating server completion for payment:', paymentId);
+                            this.handlePaymentSuccess({ paymentId, txid });
+                        }, 1000);
+                    },
                     
-                    // Simulate server completion for GitHub Pages
-                    setTimeout(() => {
-                        console.log('Simulating server completion for payment:', paymentId);
-                        this.handlePaymentSuccess({ paymentId, txid });
-                    }, 1000);
-                },
-                
-                onCancel: (paymentId) => {
-                    console.log('Payment cancelled by user:', paymentId);
-                    this.handlePaymentCancel();
-                },
-                
-                onError: (error, payment) => {
-                    console.error('Payment error occurred:', error, payment);
-                    this.handlePaymentError(error);
-                }
-            });
+                    onCancel: (paymentId) => {
+                        console.log('Payment cancelled by user:', paymentId);
+                        this.handlePaymentCancel();
+                    },
+                    
+                    onError: (error, payment) => {
+                        console.error('Payment error occurred:', error, payment);
+                        this.handlePaymentError(error);
+                    }
+                }),
+                new Promise((_, reject) => 
+                    setTimeout(() => reject(new Error('Payment creation timeout')), 45000)
+                )
+            ]);
             
             console.log('Payment created successfully:', payment);
             return payment;
             
         } catch (error) {
             console.error('Failed to create payment:', error);
-            this.handlePaymentError(error);
+            
+            // Handle specific timeout errors
+            if (error.message.includes('timeout')) {
+                this.handlePaymentError(new Error('Payment timed out. This may happen if you\'re not in Pi Browser or if there\'s a network issue.'));
+            } else {
+                this.handlePaymentError(error);
+            }
             throw error;
         }
     }
@@ -228,14 +280,21 @@ class PiPaymentManager {
         
         this.updateButtonText(hasPremium ? 'Premium Active' : '🚀 Unlock Premium Features (1π)');
         this.paymentButton.disabled = hasPremium;
-        
-        this.paymentButton.addEventListener('click', async () => {
+          this.paymentButton.addEventListener('click', async () => {
             if (this.isProcessing || this.paymentButton.disabled) {
                 return;
             }
             
             this.isProcessing = true;
-            this.updateButtonText('Processing...');
+            this.updateButtonText('Connecting...');
+            
+            // Add a maximum processing time to prevent getting stuck
+            const maxProcessingTime = setTimeout(() => {
+                if (this.isProcessing) {
+                    console.warn('Payment processing took too long, resetting...');
+                    this.handlePaymentError(new Error('Payment took too long to process. Please try again.'));
+                }
+            }, 60000); // 60 seconds max
             
             try {
                 await this.createPayment();
@@ -243,6 +302,7 @@ class PiPaymentManager {
                 console.error('Payment process failed:', error);
                 this.handlePaymentError(error);
             } finally {
+                clearTimeout(maxProcessingTime);
                 this.isProcessing = false;
             }
         });
@@ -250,18 +310,32 @@ class PiPaymentManager {
         chatContainer.appendChild(this.paymentButton);
         console.log('Pi payment button created and added to chat container');
     }
-    
-    createFallbackButton() {
+      createFallbackButton() {
         const chatContainer = document.querySelector('.chat-container');
         if (!chatContainer) return;
         
-        this.paymentButton = document.createElement('button');
-        this.paymentButton.className = 'mt-4 w-full px-4 py-3 bg-gray-600 text-white rounded-lg font-medium opacity-50 cursor-not-allowed';
-        this.paymentButton.textContent = 'Pi Payments (Requires Pi Browser)';
-        this.paymentButton.disabled = true;
+        this.paymentButton = document.createElement('div');
+        this.paymentButton.className = 'mt-4 w-full p-4 bg-gray-700 text-white rounded-lg text-center';
+        this.paymentButton.innerHTML = `
+            <div class="mb-2">
+                <span class="text-yellow-400">⚠️</span>
+                <strong>Pi Browser Required</strong>
+            </div>
+            <p class="text-sm text-gray-300 mb-3">
+                To unlock premium features with Pi payments, please:
+            </p>
+            <ol class="text-sm text-gray-300 text-left space-y-1 mb-3">
+                <li>1. Download Pi Browser from the Pi Network app</li>
+                <li>2. Open this website in Pi Browser</li>
+                <li>3. Return here to make your payment</li>
+            </ol>
+            <div class="text-xs text-gray-400">
+                Current browser: ${navigator.userAgent.includes('Pi') ? 'Pi Browser' : 'Regular Browser'}
+            </div>
+        `;
         
         chatContainer.appendChild(this.paymentButton);
-        console.log('Fallback payment button created (Pi SDK not available)');
+        console.log('Fallback payment info created (Pi SDK not available)');
     }
     
     updateButtonText(text) {
