@@ -22,6 +22,12 @@ build/
 *.fbx
 *.mp4
 assets/videos/
+**/background-video.mp4
+**/robot_playground_backup.glb
+**/typescript.js
+**/_tsc.js
+# Images larger than 5MB
+**/aihelphuman.jpg
 
 # Logs
 logs

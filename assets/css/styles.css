@@ -6,7 +6,7 @@ html, body {
 /* Update chat page background to make the robot picture fuller */
 body {
   background-color: #121212; /* Set a dark background color */
-  background: url('../pictures/aihelphuman.jpg') no-repeat center center fixed;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   background-size: cover;
   color: #ffffff; /* Ensure text is readable on dark background */
   padding: 20px; /* Add padding around the body for better spacing */
