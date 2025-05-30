@@ -1,4 +1,3 @@
-
 /**
  * Enhanced Error Handler for TumzyTech
  * Handles missing resources, offline states, and provides graceful fallbacks
@@ -30,7 +29,9 @@ class ErrorHandler {
   async registerServiceWorker() {
     if ('serviceWorker' in navigator) {
       try {
-        const registration = await navigator.serviceWorker.register('/sw.js');
+        // Adjust path for GitHub Pages deployment and local development
+        const swPath = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' ? '/sw.js' : '/TunmzyTech/sw.js';
+        const registration = await navigator.serviceWorker.register(swPath);
         console.log('Service Worker registered successfully:', registration.scope);
         
         // Check for updates

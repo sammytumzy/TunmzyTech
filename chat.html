@@ -227,7 +227,16 @@
   <div class="chat-container">
     <div class="chat-header">Chat with TumzyBot</div>
     <div id="server-connection-status" class="text-center mb-1 text-xs"></div>
-    <div id="subscription-status" class="text-center mb-2 text-sm text-gray-300"></div>
+    
+    <!-- User and Subscription Status Information -->
+    <div class="user-status-info text-center mb-3 text-sm">
+        <div>Welcome, <span id="user-name" class="font-semibold">User</span></div>
+        <div>Status: <span id="premium-status" class="font-semibold">Loading...</span> (<span id="remaining-trials"></span>)</div>
+        <div>Pi Network: <span id="pi-username" class="font-semibold"></span> <span id="pi-auth-status"></span></div>
+    </div>
+    
+    <div id="subscription-status" class="text-center mb-2 text-sm text-gray-300"></div> <!-- This might be redundant now or can be repurposed -->
+    
     <div id="chat-window" class="chat-window">
       <div class="chat-message bot">Hello! How can I assist you with TumzyTech today?</div>
     </div>
@@ -235,6 +244,10 @@
       <input type="text" id="user-input" placeholder="Type your message..." class="flex-grow px-3 py-2 rounded bg-gray-900 text-white border-none outline-none">
       <button type="submit" class="ml-2 px-4 py-2 bg-purple-700 text-white rounded">Send</button>
     </form>
+
+    <!-- Placeholder for Pi Payment Button -->
+    <div id="pi-payment-button-placeholder" class="mt-4"></div>
+
   </div>
   <script src="assets/js/error-handler.js"></script>
   <script src="assets/js/chat.js"></script>

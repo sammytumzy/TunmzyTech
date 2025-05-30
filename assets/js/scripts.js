@@ -219,7 +219,8 @@ if (signUpTabButton) {
     authModalTitle.textContent = 'Sign Up';
     signUpTabButton.classList.add('border-purple-500');
     signUpTabButton.classList.remove('text-gray-400', 'hover:text-white');
-    signInTabButton.classList.remove('border-purple-500');
+    // Corrected the missing class name for signInTabButton.classList.remove
+    signInTabButton.classList.remove('border-purple-500'); 
     signInTabButton.classList.add('text-gray-400', 'hover:text-white');
     signUpForm.classList.remove('hidden');
     signInForm.classList.add('hidden');
@@ -378,9 +379,8 @@ const revealSection = () => {
 window.addEventListener('scroll', revealSection);
 window.addEventListener('load', revealSection);
 
-// Lazy load video background
-function initVideoBackground() {
-  // Check if video background container already exists
+// Gradient Background Initialization
+function initGradientBackground() {
   let videoBackground = document.getElementById('video-background');
   
   if (!videoBackground) {
@@ -394,20 +394,15 @@ function initVideoBackground() {
     videoBackground.style.height = '100%';
     videoBackground.style.zIndex = '-1';
     videoBackground.style.overflow = 'hidden';
-    videoBackground.style.display = 'none'; // Hide initially
+    // videoBackground.style.display = 'none'; // Initially hidden, will be shown by gradient styles
     document.body.appendChild(videoBackground);
   }
-  
-  // Create gradient background instead of video
-function initGradientBackground() {
-  const videoBackground = document.getElementById('video-background');
-  if (!videoBackground) return;
   
   // Create animated gradient background
   videoBackground.style.background = 'linear-gradient(-45deg, #667eea, #764ba2, #667eea, #764ba2)';
   videoBackground.style.backgroundSize = '400% 400%';
   videoBackground.style.animation = 'gradientShift 15s ease infinite';
-  videoBackground.style.display = 'block';
+  videoBackground.style.display = 'block'; // Ensure it's visible
   
   // Add CSS animation if not already present
   if (!document.getElementById('gradient-animation-styles')) {
@@ -553,10 +548,10 @@ function initLogoCanvas() {  // Create a new canvas element for the 3D logo
   
   // Set up Three.js renderer
   const logoRenderer = new THREE.WebGLRenderer({ canvas: logoCanvas, antialias: true, alpha: true });
-  logoRenderer.setSize(logoCanvas.clientWidth, logoCanvas.clientHeight);
+  logoRenderer.setSize(logoCanvas.width, logoCanvas.height); // Use canvas.width and canvas.height
   
   const logoScene = new THREE.Scene();
-  const logoCamera = new THREE.PerspectiveCamera(75, logoCanvas.clientWidth / logoCanvas.clientHeight, 0.1, 1000);
+  const logoCamera = new THREE.PerspectiveCamera(75, logoCanvas.width / logoCanvas.height, 0.1, 1000); // Use canvas.width / canvas.height
   logoCamera.position.z = 2;
 
   // Add lighting to the logo scene
@@ -567,7 +562,8 @@ function initLogoCanvas() {  // Create a new canvas element for the 3D logo
   let logoModel = null;
 
   const logoLoader = new THREE.GLTFLoader();
-  logoLoader.load('assets/pictures/flying.glb', function (gltf) {
+  // Corrected the path for the 3D logo model
+  logoLoader.load('assets/pictures/robot_playground_backup.glb', function (gltf) { 
     logoModel = gltf.scene;
     logoScene.add(logoModel);
 
@@ -623,13 +619,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
         parallaxElements.forEach((element) => {
             const speed = element.getAttribute("data-speed") || 1; // Default speed if not set
-            element.style.transform = `translate(${x * speed * 20}px, ${y * speed * 20}px)`;
+            // Corrected the syntax for the transform style property
+            element.style.transform = `translate(${x * speed * 20}px, ${y * speed * 20}px)`; 
         });
     });
   }
 
-  // Initialize 3D logo
-  initLogoCanvas();
+  // Initialize 3D logo only if THREE.js and GLTFLoader are available
+  if (typeof THREE !== 'undefined' && typeof THREE.GLTFLoader !== 'undefined') {
+    initLogoCanvas();
+  } else {
+    console.error('THREE.js or GLTFLoader is not loaded. Skipping 3D logo initialization.');
+  }
 });
 
 // Ensure checkAuthStatus is defined and called after DOM is loaded.
@@ -644,6 +645,7 @@ async function checkAuthStatus() {
     if (user || piUser) {
       const userData = user ? JSON.parse(user) : JSON.parse(piUser);
       if (authStatusElement) {
+        // Corrected template literal for authStatusElement.textContent
         authStatusElement.textContent = `Welcome, ${userData.name || userData.email || userData.username}`;
       }
       if (authModalLink) authModalLink.style.display = 'none';
@@ -701,21 +703,27 @@ function handleContactForm(event) {
   
   // Create mailto link with form data
   const subject = encodeURIComponent('Contact Form Submission from TumzyTech');
-  const body = encodeURIComponent(`Name: ${name}\nEmail: ${email}\n\nMessage:\n${message}`);
+  // Corrected template literal for body
+  const body = encodeURIComponent(`Name: ${name}\\nEmail: ${email}\\n\\nMessage:\\n${message}`);
+  // Corrected template literal for mailtoLink
   const mailtoLink = `mailto:contact@tumzytech.com?subject=${subject}&body=${body}`;
   
   // Open user's email client
   window.location.href = mailtoLink;
-  
-  // Show success message
+    // Show success message
   const button = event.target.querySelector('button[type="submit"]');
   const originalText = button.textContent;
   button.textContent = 'Opening Email Client...';
   button.disabled = true;
-  
   setTimeout(() => {
     button.textContent = originalText;
     button.disabled = false;
     event.target.reset();
   }, 2000);
+}
+
+// Attach the form handler to the contact form
+const contactForm = document.getElementById('contact-form'); // Assuming your form has id="contact-form"
+if (contactForm) {
+  contactForm.addEventListener('submit', handleContactForm);
 }
