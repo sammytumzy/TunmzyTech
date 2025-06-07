@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <meta name="theme-color" content="#000000" />
+        <meta name="description" content="TunmzyTech - AI-Powered Tools with Pi Network Payments" />
+        <title>TunmzyTech | AI Tools & Content Generation</title>
+        
+        <!-- Pi Network SDK -->
+        <script src="https://sdk.minepi.com/pi-sdk.js"></script>
+        <script>
+            window.addEventListener('DOMContentLoaded', function() {
+                if (typeof Pi !== 'undefined') {
+                    Pi.init({ version: "2.0", sandbox: true });
+                    console.log('Pi SDK initialized in sandbox mode');
+                } else {
+                    console.error('Pi SDK not loaded');
+                }
+            });
+        </script>
+    </head>
+    <body>
+        <noscript>You need to enable JavaScript to run this app.</noscript>
+        <div id="root"></div>
+    </body>
+</html> 

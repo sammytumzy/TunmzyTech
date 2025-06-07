@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">    <title>Pi Network Integration Test - TumzyTech</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.5.2/css/all.min.css">
+    <script src="https://sdk.minepi.com/pi-sdk.js"></script>
+    <script src="assets/js/pi-payments.js"></script>
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        .test-card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+    </style>
+</head>
+<body class="p-8">
+    <div class="max-w-4xl mx-auto">
+        <h1 class="text-4xl font-bold text-white text-center mb-8">
+            <i class="fas fa-coins text-yellow-400 mr-3"></i>
+            Pi Network Integration Test
+        </h1>
+        
+        <!-- Status Overview -->
+        <div class="test-card rounded-xl p-6 mb-8">
+            <h2 class="text-2xl font-bold text-white mb-4">System Status</h2>
+            <div id="system-status" class="grid md:grid-cols-3 gap-4">
+                <div class="bg-gray-800 rounded-lg p-4">
+                    <h3 class="font-semibold text-gray-300">Pi SDK</h3>
+                    <p id="sdk-status" class="text-lg font-bold">Checking...</p>
+                </div>
+                <div class="bg-gray-800 rounded-lg p-4">
+                    <h3 class="font-semibold text-gray-300">Payment Manager</h3>
+                    <p id="manager-status" class="text-lg font-bold">Checking...</p>
+                </div>
+                <div class="bg-gray-800 rounded-lg p-4">
+                    <h3 class="font-semibold text-gray-300">Backend API</h3>
+                    <p id="api-status" class="text-lg font-bold">Checking...</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Authentication Test -->
+        <div class="test-card rounded-xl p-6 mb-8">
+            <h2 class="text-2xl font-bold text-white mb-4">Authentication Test</h2>
+            <div class="space-y-4">
+                <button id="test-auth" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-semibold transition">
+                    Test Pi Authentication
+                </button>
+                <div id="auth-result" class="p-4 rounded-lg hidden">
+                    <p class="font-semibold"></p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Payment Test -->
+        <div class="test-card rounded-xl p-6 mb-8">
+            <h2 class="text-2xl font-bold text-white mb-4">Payment Test</h2>
+            <div class="grid md:grid-cols-2 gap-4 mb-4">
+                <button id="test-single-payment" class="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg font-semibold transition">
+                    Test Single Session (1π)
+                </button>
+                <button id="test-subscription-payment" class="bg-purple-600 hover:bg-purple-700 text-white px-6 py-3 rounded-lg font-semibold transition">
+                    Test Subscription (0.5π)
+                </button>
+            </div>
+            <div id="payment-result" class="p-4 rounded-lg hidden">
+                <p class="font-semibold"></p>
+            </div>
+        </div>
+
+        <!-- Subscription Status -->
+        <div class="test-card rounded-xl p-6 mb-8">
+            <h2 class="text-2xl font-bold text-white mb-4">Subscription Status</h2>
+            <div class="space-y-4">
+                <button id="check-subscription" class="bg-yellow-600 hover:bg-yellow-700 text-white px-6 py-3 rounded-lg font-semibold transition">
+                    Check Subscription Status
+                </button>
+                <div id="subscription-result" class="p-4 rounded-lg hidden">
+                    <p class="font-semibold"></p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Test Log -->
+        <div class="test-card rounded-xl p-6">
+            <h2 class="text-2xl font-bold text-white mb-4">Test Log</h2>
+            <div id="test-log" class="bg-gray-900 rounded-lg p-4 h-64 overflow-y-auto text-sm text-gray-300 font-mono">
+                <!-- Test logs will appear here -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const log = document.getElementById('test-log');
+        
+        function addLog(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            const colors = {
+                info: 'text-blue-400',
+                success: 'text-green-400',
+                error: 'text-red-400',
+                warning: 'text-yellow-400'
+            };
+            
+            const logEntry = document.createElement('div');
+            logEntry.className = colors[type] || 'text-gray-300';
+            logEntry.textContent = `[${timestamp}] ${message}`;
+            log.appendChild(logEntry);
+            log.scrollTop = log.scrollHeight;
+        }
+
+        function showResult(elementId, message, isSuccess) {
+            const element = document.getElementById(elementId);
+            element.className = `p-4 rounded-lg ${isSuccess ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`;
+            element.querySelector('p').textContent = message;
+            element.classList.remove('hidden');
+        }
+
+        // Initialize system status check
+        document.addEventListener('DOMContentLoaded', async () => {
+            addLog('Starting Pi Network integration tests...', 'info');
+            
+            // Check Pi SDK
+            if (typeof window.Pi !== 'undefined') {
+                document.getElementById('sdk-status').textContent = '✅ Available';
+                document.getElementById('sdk-status').className = 'text-lg font-bold text-green-400';
+                addLog('Pi SDK loaded successfully', 'success');
+            } else {
+                document.getElementById('sdk-status').textContent = '❌ Not Available';
+                document.getElementById('sdk-status').className = 'text-lg font-bold text-red-400';
+                addLog('Pi SDK not found', 'error');
+            }
+
+            // Check Payment Manager
+            if (window.piPaymentManager) {
+                document.getElementById('manager-status').textContent = '✅ Ready';
+                document.getElementById('manager-status').className = 'text-lg font-bold text-green-400';
+                addLog('Pi Payment Manager loaded successfully', 'success');
+            } else {
+                document.getElementById('manager-status').textContent = '❌ Not Ready';
+                document.getElementById('manager-status').className = 'text-lg font-bold text-red-400';
+                addLog('Pi Payment Manager not found', 'error');
+            }
+
+            // Check Backend API
+            try {
+                const response = await fetch('/api/pi/subscription-status');
+                if (response.ok || response.status === 401) {
+                    document.getElementById('api-status').textContent = '✅ Connected';
+                    document.getElementById('api-status').className = 'text-lg font-bold text-green-400';
+                    addLog('Backend API accessible', 'success');
+                } else {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+            } catch (error) {
+                document.getElementById('api-status').textContent = '❌ Error';
+                document.getElementById('api-status').className = 'text-lg font-bold text-red-400';
+                addLog(`Backend API error: ${error.message}`, 'error');
+            }
+        });
+
+        // Authentication test
+        document.getElementById('test-auth').addEventListener('click', async () => {
+            addLog('Testing Pi Network authentication...', 'info');
+            try {
+                if (window.piPaymentManager) {
+                    const auth = await window.piPaymentManager.authenticate();
+                    showResult('auth-result', `Successfully authenticated as ${auth.user.username}`, true);
+                    addLog(`Authentication successful: ${auth.user.username}`, 'success');
+                } else {
+                    throw new Error('Pi Payment Manager not available');
+                }
+            } catch (error) {
+                showResult('auth-result', `Authentication failed: ${error.message}`, false);
+                addLog(`Authentication failed: ${error.message}`, 'error');
+            }
+        });
+
+        // Single session payment test
+        document.getElementById('test-single-payment').addEventListener('click', async () => {
+            addLog('Testing single session payment (1π)...', 'info');
+            try {
+                if (window.piPaymentManager) {
+                    const payment = await window.piPaymentManager.createPayment('singleSession');
+                    showResult('payment-result', `Payment successful! Payment ID: ${payment.identifier}`, true);
+                    addLog(`Single session payment successful: ${payment.identifier}`, 'success');
+                } else {
+                    throw new Error('Pi Payment Manager not available');
+                }
+            } catch (error) {
+                showResult('payment-result', `Payment failed: ${error.message}`, false);
+                addLog(`Single session payment failed: ${error.message}`, 'error');
+            }
+        });
+
+        // Subscription payment test
+        document.getElementById('test-subscription-payment').addEventListener('click', async () => {
+            addLog('Testing subscription payment (0.5π)...', 'info');
+            try {
+                if (window.piPaymentManager) {
+                    const payment = await window.piPaymentManager.createPayment('chatSubscription');
+                    showResult('payment-result', `Subscription payment successful! Payment ID: ${payment.identifier}`, true);
+                    addLog(`Subscription payment successful: ${payment.identifier}`, 'success');
+                } else {
+                    throw new Error('Pi Payment Manager not available');
+                }
+            } catch (error) {
+                showResult('payment-result', `Subscription payment failed: ${error.message}`, false);
+                addLog(`Subscription payment failed: ${error.message}`, 'error');
+            }
+        });
+
+        // Subscription status check
+        document.getElementById('check-subscription').addEventListener('click', async () => {
+            addLog('Checking subscription status...', 'info');
+            try {
+                if (window.piPaymentManager) {
+                    const status = await window.piPaymentManager.checkSubscriptionStatus();
+                    const message = status.subscriptionActive 
+                        ? `Active subscription until ${new Date(status.subscriptionEndDate).toLocaleDateString()}`
+                        : 'No active subscription';
+                    showResult('subscription-result', message, status.subscriptionActive);
+                    addLog(`Subscription status: ${message}`, status.subscriptionActive ? 'success' : 'warning');
+                } else {
+                    throw new Error('Pi Payment Manager not available');
+                }
+            } catch (error) {
+                showResult('subscription-result', `Error checking subscription: ${error.message}`, false);
+                addLog(`Subscription check failed: ${error.message}`, 'error');
+            }
+        });
+    </script>
+</body>
+</html>
+                }
+            } else {
+                addResult('❌ Pi SDK not loaded - this is expected outside Pi Browser', 'warning');
+            }
+        }, 2000);
+        
+        // Test 3: Check browser environment
+        const userAgent = navigator.userAgent.toLowerCase();
+        const isPiBrowser = userAgent.includes('pi browser') || userAgent.includes('pi network');
+        
+        if (isPiBrowser) {
+            addResult('✅ Running in Pi Browser environment', 'success');
+        } else {
+            addResult('⚠️ Not running in Pi Browser - payment features will be limited', 'warning');
+        }
+        
+        // Test 4: Check for console errors
+        const originalConsoleError = console.error;
+        let errorCount = 0;
+        
+        console.error = function(...args) {
+            errorCount++;
+            originalConsoleError.apply(console, args);
+        };
+        
+        setTimeout(() => {
+            if (errorCount === 0) {
+                addResult('✅ No console errors detected', 'success');
+            } else {
+                addResult(`⚠️ ${errorCount} console errors detected - check browser console`, 'warning');
+            }
+        }, 5000);
+    </script>
+    
+    <!-- Load Pi SDK for testing -->
+    <script src="https://sdk.minepi.com/pi-sdk.js"></script>
+</body>
+</html>

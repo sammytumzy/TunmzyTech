@@ -23,6 +23,7 @@
   <div id="pi-status" class="hidden fixed top-4 right-4 bg-glass p-2 rounded-lg text-white"></div>
   <link rel="stylesheet" href="assets/css/styles.css">
   <script src="assets/js/scripts.js" defer></script>
+  <script src="assets/js/pi-payments.js" defer></script>
   <link rel="icon" href="assets/pictures/favicon_io (4)/favicon.ico" type="image/x-icon">
   <link rel="apple-touch-icon" sizes="180x180" href="assets/pictures/favicon_io (4)/apple-touch-icon.png">
   <link rel="icon" type="image/png" sizes="32x32" href="assets/pictures/favicon_io (4)/favicon-32x32.png">
@@ -795,10 +796,79 @@
         console.error('Error completing payment:', error);
         throw error;
       }
-    }    // Payment functionality has been moved to the chat.html page
-
-    // Call authentication on page load
+    }    // Payment functionality has been moved to the chat.html page    // Call authentication on page load
     document.addEventListener('DOMContentLoaded', authenticateWithPi);
+
+    // Pi Network payment test functionality
+    document.addEventListener('DOMContentLoaded', () => {
+      const testPaymentBtn = document.getElementById('test-pi-payment');
+      const checkStatusBtn = document.getElementById('check-pi-status');
+      const statusDiv = document.getElementById('pi-test-status');
+
+      if (testPaymentBtn) {
+        testPaymentBtn.addEventListener('click', async () => {
+          try {
+            if (window.piPaymentManager) {
+              statusDiv.className = 'mt-4 p-4 rounded-lg bg-blue-100 text-blue-800';
+              statusDiv.querySelector('p').textContent = 'Opening Pi payment modal...';
+              statusDiv.classList.remove('hidden');
+
+              window.piPaymentManager.showPaymentModal();
+            } else {
+              statusDiv.className = 'mt-4 p-4 rounded-lg bg-red-100 text-red-800';
+              statusDiv.querySelector('p').textContent = 'Pi payment system not loaded. Please refresh the page.';
+              statusDiv.classList.remove('hidden');
+            }
+          } catch (error) {
+            statusDiv.className = 'mt-4 p-4 rounded-lg bg-red-100 text-red-800';
+            statusDiv.querySelector('p').textContent = `Error: ${error.message}`;
+            statusDiv.classList.remove('hidden');
+          }
+        });
+      }
+
+      if (checkStatusBtn) {
+        checkStatusBtn.addEventListener('click', async () => {
+          try {
+            if (window.piPaymentManager) {
+              statusDiv.className = 'mt-4 p-4 rounded-lg bg-blue-100 text-blue-800';
+              statusDiv.querySelector('p').textContent = 'Checking Pi Network status...';
+              statusDiv.classList.remove('hidden');
+
+              // Check if Pi SDK is available
+              const piAvailable = typeof window.Pi !== 'undefined';
+              
+              // Check authentication status
+              let authStatus = 'Not authenticated';
+              if (window.piUser) {
+                authStatus = `Authenticated as ${window.piUser.username}`;
+              }
+
+              // Check subscription status
+              const subscriptionStatus = await window.piPaymentManager.checkSubscriptionStatus();
+              
+              const statusText = `
+                Pi SDK: ${piAvailable ? 'Available' : 'Not available'}
+                Authentication: ${authStatus}
+                Subscription: ${subscriptionStatus.subscriptionActive ? 'Active' : 'Inactive'}
+              `;
+
+              statusDiv.className = 'mt-4 p-4 rounded-lg bg-green-100 text-green-800';
+              statusDiv.querySelector('p').innerHTML = statusText.replace(/\n/g, '<br>');
+              statusDiv.classList.remove('hidden');
+            } else {
+              statusDiv.className = 'mt-4 p-4 rounded-lg bg-red-100 text-red-800';
+              statusDiv.querySelector('p').textContent = 'Pi payment system not loaded.';
+              statusDiv.classList.remove('hidden');
+            }
+          } catch (error) {
+            statusDiv.className = 'mt-4 p-4 rounded-lg bg-red-100 text-red-800';
+            statusDiv.querySelector('p').textContent = `Error checking status: ${error.message}`;
+            statusDiv.classList.remove('hidden');
+          }
+        });
+      }
+    });
   </script>
 </head>
 <body class="relative text-white min-h-screen">
@@ -924,8 +994,56 @@
         <a href="chat.html" class="relative z-10 bg-glass p-8 rounded-3xl shadow-lg group transform transition duration-300 hover:-translate-y-3 hover:shadow-xl">
           <span class="block text-pink-400 text-4xl mb-3"><i class="fas fa-user-cog"></i></span>
           <h3 class="font-bold mb-2">AI-Powered Financial Assistant</h3>
-          <p class="text-sm text-gray-300 mb-3">Intelligent assistants to automate accounting, budgeting, and strategic planning for your organization.</p>
-        </a>
+          <p class="text-sm text-gray-300 mb-3">Intelligent assistants to automate accounting, budgeting, and strategic planning for your organization.</p>        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- PI NETWORK PAYMENT TEST SECTION -->
+  <section id="pi-payment-test" class="relative py-16 z-10">
+    <div class="max-w-4xl mx-auto">
+      <div class="bg-gradient-to-br from-yellow-600 to-yellow-800 rounded-xl shadow-2xl p-10 text-center">
+        <h2 class="text-4xl font-extrabold mb-4 text-white">
+          <i class="fas fa-coins text-yellow-400 mr-3"></i>
+          Pi Network Integration
+        </h2>
+        <p class="mb-6 text-yellow-100 text-lg">
+          Experience seamless cryptocurrency payments with Pi Network. Test our payment integration and unlock premium AI features.
+        </p>
+        <div class="grid md:grid-cols-2 gap-6 mb-8">
+          <div class="bg-white/10 rounded-xl p-6">
+            <h3 class="font-bold text-xl mb-3 text-yellow-200">
+              <i class="fas fa-rocket mr-2"></i>
+              Single Session
+            </h3>
+            <p class="text-3xl font-bold text-yellow-400 mb-2">1 π</p>
+            <p class="text-yellow-100 text-sm">One-time access to all AI tools</p>
+          </div>
+          <div class="bg-white/10 rounded-xl p-6">
+            <h3 class="font-bold text-xl mb-3 text-yellow-200">
+              <i class="fas fa-star mr-2"></i>
+              Full Access
+            </h3>
+            <p class="text-3xl font-bold text-yellow-400 mb-2">0.5 π</p>
+            <p class="text-yellow-100 text-sm">Complete access to all features</p>
+          </div>
+        </div>        <div class="space-y-4">
+          <button id="test-pi-payment" class="px-8 py-4 bg-yellow-500 hover:bg-yellow-600 text-black font-bold rounded-xl shadow-lg transform hover:scale-105 transition-all duration-300 text-lg">
+            <i class="fas fa-coins mr-2"></i>
+            Test Pi Payment
+          </button>
+          <button id="check-pi-status" class="px-8 py-4 bg-yellow-700 hover:bg-yellow-800 text-white font-bold rounded-xl shadow-lg transform hover:scale-105 transition-all duration-300 text-lg ml-4">
+            <i class="fas fa-user-check mr-2"></i>
+            Check Pi Status
+          </button>
+          <a href="/pi-test" class="inline-block px-8 py-4 bg-yellow-900 hover:bg-yellow-800 text-white font-bold rounded-xl shadow-lg transform hover:scale-105 transition-all duration-300 text-lg ml-4">
+            <i class="fas fa-flask mr-2"></i>
+            Advanced Pi Testing
+          </a>
+        </div>
+        <div id="pi-test-status" class="mt-4 p-4 rounded-lg hidden">
+          <p class="font-semibold"></p>
+        </div>
       </div>
     </div>
   </section>

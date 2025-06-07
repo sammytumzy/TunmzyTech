@@ -1,0 +1,285 @@
+/* Reset and base styles */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background-color: #0f0f10;
+  color: #ffffff;
+}
+
+.App {
+  min-height: 100vh;
+}
+
+/* Container */
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 20px;
+}
+
+/* Header */
+.header {
+  background-color: #1a1a1b;
+  border-bottom: 1px solid #333;
+  padding: 1rem 0;
+}
+
+.header .container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.logo {
+  font-size: 1.8rem;
+  font-weight: bold;
+  color: #ffa500;
+}
+
+.nav {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.user-info {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+/* Buttons */
+.btn {
+  padding: 0.75rem 1.5rem;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.btn-primary {
+  background-color: #ffa500;
+  color: #000;
+}
+
+.btn-primary:hover:not(:disabled) {
+  background-color: #ff8c00;
+  transform: translateY(-1px);
+}
+
+.btn-secondary {
+  background-color: #333;
+  color: #fff;
+  border: 1px solid #555;
+}
+
+.btn-secondary:hover:not(:disabled) {
+  background-color: #444;
+}
+
+.btn-pi {
+  background: linear-gradient(135deg, #ffa500 0%, #ff8c00 100%);
+  color: #000;
+  font-weight: bold;
+  box-shadow: 0 4px 12px rgba(255, 165, 0, 0.3);
+}
+
+.btn-pi:hover:not(:disabled) {
+  background: linear-gradient(135deg, #ff8c00 0%, #ff7700 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(255, 165, 0, 0.4);
+}
+
+/* Main content */
+.main {
+  min-height: calc(100vh - 80px);
+}
+
+/* Hero section */
+.hero {
+  background: linear-gradient(135deg, #1a1a1b 0%, #2d2d2e 100%);
+  padding: 4rem 0;
+  text-align: center;
+}
+
+.hero-title {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+  background: linear-gradient(135deg, #ffa500 0%, #ff8c00 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.hero-subtitle {
+  font-size: 1.2rem;
+  color: #ccc;
+  max-width: 600px;
+  margin: 0 auto 2rem;
+  line-height: 1.6;
+}
+
+.payment-status {
+  background-color: #2d2d2e;
+  border: 1px solid #ffa500;
+  border-radius: 8px;
+  padding: 1rem;
+  margin: 2rem auto;
+  max-width: 500px;
+  color: #ffa500;
+  font-weight: 600;
+}
+
+/* Tools section */
+.tools {
+  padding: 4rem 0;
+}
+
+.section-title {
+  text-align: center;
+  font-size: 2.5rem;
+  margin-bottom: 3rem;
+  color: #fff;
+}
+
+.tools-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 2rem;
+  max-width: 1000px;
+  margin: 0 auto;
+}
+
+/* Tool cards */
+.tool-card {
+  background-color: #1a1a1b;
+  border: 1px solid #333;
+  border-radius: 12px;
+  padding: 2rem;
+  text-align: center;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.tool-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, #ffa500, #ff8c00);
+  transform: scaleX(0);
+  transition: transform 0.3s ease;
+}
+
+.tool-card:hover {
+  transform: translateY(-5px);
+  border-color: #ffa500;
+  box-shadow: 0 10px 30px rgba(255, 165, 0, 0.2);
+}
+
+.tool-card:hover::before {
+  transform: scaleX(1);
+}
+
+.tool-title {
+  font-size: 1.5rem;
+  margin-bottom: 1rem;
+  color: #fff;
+}
+
+.tool-description {
+  color: #ccc;
+  margin-bottom: 1.5rem;
+  line-height: 1.6;
+}
+
+.tool-price {
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: #ffa500;
+  margin-bottom: 1.5rem;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .hero-title {
+    font-size: 2rem;
+  }
+  
+  .hero-subtitle {
+    font-size: 1rem;
+  }
+  
+  .tools-grid {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+  
+  .header .container {
+    flex-direction: column;
+    gap: 1rem;
+  }
+  
+  .container {
+    padding: 0 15px;
+  }
+}
+
+/* Loading animation */
+@keyframes pulse {
+  0% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+.btn:disabled {
+  animation: pulse 1.5s infinite;
+}
+
+/* Pi Network specific styling */
+.pi-badge {
+  display: inline-flex;
+  align-items: center;
+  background-color: #ffa500;
+  color: #000;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  font-weight: bold;
+  margin-left: 0.5rem;
+}
+
+.pi-badge::before {
+  content: 'π';
+  margin-right: 0.25rem;
+} 

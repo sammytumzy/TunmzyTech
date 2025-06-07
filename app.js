@@ -13,13 +13,15 @@ app.use(express.json());
 
 // Import routes
 const piRoutes = require('./routes/pi');
+const servicesRoutes = require('./routes/services');
 
 // Serve static files from the root directory
 app.use(express.static(path.join(__dirname, 'public')));
 app.use('/assets', express.static(path.join(__dirname, 'assets')));
 
-// Use Pi Network routes
+// Use routes
 app.use('/api/pi', piRoutes);
+app.use('/api/services', servicesRoutes);
 
 // Serve static files for the frontend
 app.get('/', (req, res) => {
@@ -28,6 +30,10 @@ app.get('/', (req, res) => {
 
 app.get('/chat', (req, res) => {
   res.sendFile(path.join(__dirname, 'chat.html'));
+});
+
+app.get('/pi-test', (req, res) => {
+  res.sendFile(path.join(__dirname, 'pi-test.html'));
 });
 
 // Error handling middleware

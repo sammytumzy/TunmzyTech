@@ -6,9 +6,9 @@
   <title>Chat with TumzyTech</title>
   <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
   <link rel="stylesheet" href="assets/css/styles.css">
-  <link rel="icon" href="assets/pictures/favicon.ico" type="image/x-icon">
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/bodymovin/5.9.6/lottie.min.js"></script>
+  <link rel="icon" href="assets/pictures/favicon.ico" type="image/x-icon">  <script src="https://cdnjs.cloudflare.com/ajax/libs/bodymovin/5.9.6/lottie.min.js"></script>
   <script src="https://sdk.minepi.com/pi-sdk.js"></script>
+  <script src="assets/js/pi-payments.js"></script>
   <style>
     /* Placeholder background for faster initial load */
     body {
@@ -221,13 +221,40 @@
     <form id="chat-form" class="chat-input">
       <input type="text" id="user-input" placeholder="Type your message...">
       <button type="submit">Send</button>
-    </form>
-    <div class="flex justify-between mt-2">
+    </form>    <div class="flex justify-between mt-2">
       <button id="pay-button" class="px-4 py-2 bg-blue-500 text-white rounded">Subscribe with Pi</button>
       <div id="trial-counter" class="text-sm text-gray-300 self-center"></div>
     </div>
   </div>
   <script>
+    // Check user access on page load
+    document.addEventListener('DOMContentLoaded', async () => {
+      try {
+        // Check if user has access
+        const hasAccess = await window.piPaymentManager.hasAccess();
+        
+        if (hasAccess) {
+          // User has access, update UI
+          const payButton = document.getElementById('pay-button');
+          payButton.textContent = 'Premium Access Active';
+          payButton.classList.remove('bg-blue-500');
+          payButton.classList.add('bg-green-500');
+          payButton.disabled = true;
+        }
+      } catch (error) {
+        console.error('Error checking access:', error);
+      }
+    });
+
+    // Handle payment button click
+    document.getElementById('pay-button').addEventListener('click', () => {
+      if (window.piPaymentManager) {
+        window.piPaymentManager.showPaymentModal();
+      } else {
+        alert('Pi Network payment system not available. Please refresh the page.');
+      }
+    });
+
     // Lazy load the video background
     window.addEventListener('load', function() {
       const videoBackground = document.getElementById('video-background');
@@ -314,8 +341,7 @@
           
           // Remove typing indicator
           chatWindow.removeChild(typingDiv);
-          
-          if (response.status === 402) {
+            if (response.status === 402) {
             // Payment required
             const data = await response.json();
             const botMessageDiv = document.createElement('div');
@@ -325,7 +351,11 @@
             
             // Add event listener to the subscribe button
             document.getElementById('subscribe-now').addEventListener('click', () => {
-              createPayment('chatSubscription');
+              if (window.piPaymentManager) {
+                window.piPaymentManager.showPaymentModal();
+              } else {
+                alert('Pi Network payment system not available. Please refresh the page.');
+              }
             });
           } else {
             const data = await response.json();
