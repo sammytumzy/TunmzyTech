@@ -38,6 +38,11 @@
 - Complete integration with backend APIs
 - Modern UI/UX with gradient effects and animations
 
+### 5. HTTPS Setup with LocalTunnel
+- Implemented LocalTunnel with subdomain https://fast-areas-shave.loca.lt
+- Created configuration for stable subdomain handling
+- Added environment variable support for tunnel configuration
+
 ## Project Structure
 
 ### Backend (`/`)
@@ -90,6 +95,7 @@ OPENAI_API_KEY=your_openai_api_key
 
 # Server
 PORT=5000
+LOCALTUNNEL_SUBDOMAIN=your_subdomain
 ```
 
 ### Frontend Environment
@@ -109,6 +115,7 @@ REACT_APP_BACKEND_URL=http://localhost:5000
 3. **Access Application**:
    - Frontend: http://localhost:3000
    - Backend API: http://localhost:5000
+   - HTTPS Tunnel: https://fast-areas-shave.loca.lt
 
 ### Production Deployment
 - Configure production environment variables

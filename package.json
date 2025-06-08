@@ -7,13 +7,20 @@
   "scripts": {
     "start": "node app.js",
     "dev": "nodemon app.js",
+<<<<<<< HEAD
     "test": "echo \"Error: no test specified\";; exit 1"
   },  "dependencies": {
     "axios": "^1.6.7",
+=======
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },  "dependencies": {
+    "axios": "^1.9.0",
+>>>>>>> f0d38d87b7a8cbf4156ccd4c1cf1b8254d297799
     "connect-mongo": "^5.1.0",
     "cors": "^2.8.5",
     "dotenv": "^16.5.0",
     "express": "^4.21.2",
+<<<<<<< HEAD
     "express-mongo-sanitize": "^2.2.0",
     "express-rate-limit": "^7.5.0",
     "express-session": "^1.17.3",
@@ -28,6 +35,16 @@
     "passport-local": "^1.0.0",
     "supertest": "^7.1.1",
     "xss-clean": "^0.1.4"
+=======
+    "express-session": "^1.18.1",
+    "jsonwebtoken": "^9.0.2",
+    "localtunnel": "^2.0.2",
+    "mongoose": "^7.8.7",
+    "node-fetch": "^2.6.9",
+    "passport": "^0.6.0",
+    "passport-google-oauth20": "^2.0.0",
+    "passport-local": "^1.0.0"
+>>>>>>> f0d38d87b7a8cbf4156ccd4c1cf1b8254d297799
   },
   "devDependencies": {
     "nodemon": "^3.1.10"

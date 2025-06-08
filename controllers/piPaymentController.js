@@ -1,251 +1,247 @@
 const axios = require('axios');
 const User = require('../models/User');
-const piConfig = require('../config/pi-network');
 
-/**
- * Pi Network Payment Controller
- * Handles all Pi Network payment operations following Pi Network guidelines
- */
-const piPaymentController = {
-  /**
-   * Create a payment
-   * This function is called from the client side
-   */
-  createPayment: async (req, res) => {
-    try {
-      const { paymentType = 'singleSession', uid } = req.body;
-      
-      // Get payment options based on payment type
-      const paymentOption = piConfig.paymentOptions[paymentType];
-      if (!paymentOption) {
-        return res.status(400).json({ success: false, message: 'Invalid payment type' });
-      }
-      
-      // Return payment details to be used by the Pi SDK on the client
-      res.json({
-        success: true,
-        paymentData: {
-          amount: paymentOption.amount,
-          memo: paymentOption.memo,
-          metadata: paymentOption.metadata,
-          uid: uid || null,
-          to: piConfig.walletAddress
-        }
-      });
-    } catch (error) {
-      console.error('Error creating payment:', error);
-      res.status(500).json({ success: false, message: 'Error creating payment' });
-    }
-  },
+// Load environment variables
+require('dotenv').config(); 
 
-  /**
-   * Approve a payment
-   * This is called by the client when a payment is ready for server approval
-   */
-  approvePayment: async (req, res) => {
-    try {
-      const { paymentId } = req.body;
-      
-      if (!paymentId) {
-        return res.status(400).json({ success: false, message: 'Payment ID is required' });
-      }
-      
-      // Verify the payment with Pi Network
-      const paymentData = await piPaymentController.verifyPaymentWithPi(paymentId);
-      
-      if (!paymentData) {
-        return res.status(400).json({ success: false, message: 'Unable to verify payment with Pi Network' });
-      }
-      
-      // Check if payment is in the correct state
-      if (paymentData.status !== 'created') {
-        return res.status(400).json({ 
-          success: false, 
-          message: `Payment is in ${paymentData.status} state, not ready for approval` 
-        });
-      }
-      
-      // Approve the payment with Pi Network
-      const approvalResponse = await axios.post(
-        `${piConfig.apiEndpoints.approvals}/${paymentId}`,
-        {},
-        { headers: { 'Authorization': `Key ${process.env.PI_API_KEY}` } }
-      );
-      
-      if (approvalResponse.status !== 200) {
-        return res.status(400).json({ success: false, message: 'Failed to approve payment with Pi Network' });
-      }
-      
-      res.json({ success: true, message: 'Payment approved successfully' });
-    } catch (error) {
-      console.error('Error approving payment:', error);
-      res.status(500).json({ success: false, message: 'Error approving payment' });
-    }
-  },
+const PI_API_KEY = process.env.PI_API_KEY;
+const PI_API_BASE_URL = 'https://api.minepi.com/v2';
 
-  /**
-   * Complete a payment
-   * This is called by the client when a payment is ready for server completion
-   */
-  completePayment: async (req, res) => {
-    try {
-      const { paymentId, txid } = req.body;
-      
-      if (!paymentId || !txid) {
-        return res.status(400).json({ success: false, message: 'Payment ID and transaction ID are required' });
-      }
-      
-      // Verify the payment with Pi Network
-      const paymentData = await piPaymentController.verifyPaymentWithPi(paymentId);
-      
-      if (!paymentData) {
-        return res.status(400).json({ success: false, message: 'Unable to verify payment with Pi Network' });
-      }
-      
-      // Check if payment is in the correct state
-      if (paymentData.status !== 'approved') {
-        return res.status(400).json({ 
-          success: false, 
-          message: `Payment is in ${paymentData.status} state, not ready for completion` 
-        });
-      }
-      
-      // Complete the payment with Pi Network
-      const completionResponse = await axios.post(
-        `${piConfig.apiEndpoints.completions}/${paymentId}`,
-        { txid },
-        { headers: { 'Authorization': `Key ${process.env.PI_API_KEY}` } }
-      );
-      
-      if (completionResponse.status !== 200) {
-        return res.status(400).json({ success: false, message: 'Failed to complete payment with Pi Network' });
-      }
-      
-      // Update user subscription status if payment is for subscription
-      if (paymentData.metadata && paymentData.metadata.productId === 'chatbot-subscription') {
-        try {
-          // Find user by Pi username
-          const user = await User.findOne({ piUsername: paymentData.user_uid });
-          if (user) {
-            // Set subscription end date to 30 days from now
-            const subscriptionEndDate = new Date();
-            subscriptionEndDate.setDate(subscriptionEndDate.getDate() + 30);
-            
-            user.subscriptionActive = true;
-            user.subscriptionEndDate = subscriptionEndDate;
-            user.paymentHistory = user.paymentHistory || [];
-            user.paymentHistory.push({
-              paymentId,
-              txid,
-              amount: paymentData.amount,
-              date: new Date(),
-              type: 'subscription'
-            });
-            
-            await user.save();
-          }
-        } catch (userError) {
-          console.error('Error updating user subscription:', userError);
-          // Continue with payment completion even if user update fails
-        }
-      }
-      
-      res.json({ success: true, message: 'Payment completed successfully' });
-    } catch (error) {
-      console.error('Error completing payment:', error);
-      res.status(500).json({ success: false, message: 'Error completing payment' });
-    }
-  },
-
-  /**
-   * Verify payment with Pi Platform API
-   * Helper function to verify payment status with Pi Network
-   */
-  verifyPaymentWithPi: async (paymentId) => {
-    try {
-      const response = await axios.get(
-        `${piConfig.apiEndpoints.payments}/${paymentId}`,
-        { headers: { 'Authorization': `Key ${process.env.PI_API_KEY}` } }
-      );
-      return response.data;
-    } catch (error) {
-      console.error('Error verifying payment with Pi Platform:', error.response?.data || error.message);
-      return null;
-    }
-  },
-
-  /**
-   * Get payment history for a user
-   */
-  getPaymentHistory: async (req, res) => {
-    try {
-      const userId = req.user.id;
-      
-      const user = await User.findById(userId);
-      if (!user) {
-        return res.status(404).json({ success: false, message: 'User not found' });
-      }
-      
-      res.json({
-        success: true,
-        paymentHistory: user.paymentHistory || [],
-        subscriptionActive: user.subscriptionActive || false,
-        subscriptionEndDate: user.subscriptionEndDate || null
-      });
-    } catch (error) {
-      console.error('Error getting payment history:', error);
-      res.status(500).json({ success: false, message: 'Error getting payment history' });
-    }
-  },
-
-  /**
-   * Check payment status
-   * Determines user access based on payment status
-   */
-  checkPaymentStatus: async (req, res) => {
-    try {
-      const { paymentId } = req.params;
-      
-      if (!paymentId) {
-        return res.status(400).json({
-          success: false,
-          message: 'Payment ID is required'
-        });
-      }
-
-      const response = await fetch(`${piConfig.apiEndpoints.base}/v2/payments/${paymentId}`, {
-        method: 'GET',
-        headers: {
-          'Authorization': `Key ${process.env.PI_API_KEY}`,
-          'Content-Type': 'application/json'
-        }
-      });
-
-      const paymentData = await response.json();
-
-      // If payment is completed, update user access
-      if (paymentData.status === 'completed') {
-        // Update user access in database
-        await User.findByIdAndUpdate(req.user._id, {
-          $set: {
-            subscriptionActive: true,
-            subscriptionEndDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) // 30 days from now
-          }
-        });
-      }
-
-      return res.json({
-        success: true,
-        payment: paymentData
-      });
-    } catch (error) {
-      console.error('Error checking payment status:', error);
-      return res.status(500).json({
-        success: false,
-        message: 'Failed to check payment status'
-      });
-    }
-  }
+// Payment amounts configuration
+const PAYMENT_CONFIG = {
+    PREMIUM_SERVICE: 1.0,
+    BASIC_SERVICE: 0.5
 };
 
-module.exports = piPaymentController;
+// Validate Pi API key on startup
+if (!PI_API_KEY) {
+    console.error('CRITICAL: PI_API_KEY is not defined in your .env file. Payment processing will fail.');
+}
+
+// Helper function to validate payment amount
+const validatePaymentAmount = (amount, expectedAmount) => {
+    const parsedAmount = parseFloat(amount);
+    return !isNaN(parsedAmount) && parsedAmount === expectedAmount;
+};
+
+exports.approvePayment = async (req, res) => {
+    const { paymentId, amount, productId } = req.body;
+    
+    if (!paymentId) {
+        return res.status(400).json({ 
+            success: false,
+            message: 'Payment ID is required' 
+        });
+    }
+
+    if (!PI_API_KEY) {
+        return res.status(500).json({ 
+            success: false,
+            message: 'Server configuration error: Pi API Key not set.' 
+        });
+    }
+
+    try {
+        // Verify the payment details with Pi servers first
+        const verifyResponse = await axios.get(
+            `${PI_API_BASE_URL}/payments/${paymentId}`,
+            {
+                headers: { 'Authorization': `Key ${PI_API_KEY}` }
+            }
+        );
+
+        const paymentData = verifyResponse.data;
+        
+        // Validate payment amount based on product
+        const expectedAmount = PAYMENT_CONFIG[productId] || PAYMENT_CONFIG.BASIC_SERVICE;
+        if (!validatePaymentAmount(paymentData.amount, expectedAmount)) {
+            throw new Error('Invalid payment amount');
+        }
+
+        // If verification passes, approve the payment
+        const response = await axios.post(
+            `${PI_API_BASE_URL}/payments/${paymentId}/approve`,
+            {},
+            {
+                headers: { 'Authorization': `Key ${PI_API_KEY}` }
+            }
+        );
+
+        console.log('Payment approved successfully:', response.data);
+        res.json({
+            success: true,
+            message: 'Payment approved',
+            data: response.data
+        });
+    } catch (error) {
+        console.error(
+            'Error approving payment with Pi API:',
+            error.response ? { status: error.response.status, data: error.response.data } : error.message
+        );
+        res.status(error.response?.status || 500).json({
+            success: false,
+            message: 'Failed to approve payment with Pi API',
+            error: error.response?.data || error.message
+        });
+    }
+};
+
+exports.completePayment = async (req, res) => {
+    const { paymentId, txid, userId } = req.body;
+    
+    if (!paymentId) { // txid might be null for onIncompletePaymentFound initially, server verifies status first
+        return res.status(400).json({ 
+            success: false,
+            message: 'Payment ID is required' 
+        });
+    }
+
+    if (!PI_API_KEY) {
+        return res.status(500).json({ 
+            success: false,
+            message: 'Server configuration error: Pi API Key not set.' 
+        });
+    }
+
+    try {
+        // Verify the transaction with Pi servers
+        const verifyResponse = await axios.get(
+            `${PI_API_BASE_URL}/payments/${paymentId}`,
+            {
+                headers: { 'Authorization': `Key ${PI_API_KEY}` }
+            }
+        );
+
+        const paymentDetailsFromPi = verifyResponse.data;
+        const finalTxid = paymentDetailsFromPi.transaction?.txid || txid; // Prefer txid from Pi verification
+
+        if (paymentDetailsFromPi.status !== 'completed') {
+            if (!finalTxid) { // txid is required for Pi API /complete call
+                 return res.status(400).json({ 
+                    success: false,
+                    message: 'Transaction ID (txid) is required to complete the payment with Pi API.' 
+                });
+            }
+            // Complete the payment with Pi API
+            const response = await axios.post(
+                `${PI_API_BASE_URL}/payments/${paymentId}/complete`,
+                { txid: finalTxid }, // Use the definitive txid
+                {
+                    headers: { 'Authorization': `Key ${PI_API_KEY}` }
+                }
+            );            // Update user's premium status if userId is provided
+            if (userId) {
+                await User.findOneAndUpdate(
+                    { piUserId: userId },
+                    {
+                        isPremium: true,
+                        lastPaymentDate: new Date(),
+                        paymentTxid: finalTxid 
+                    },
+                    { upsert: false } // Ensure we only update existing users
+                );
+                console.log(`User ${userId} premium status updated after Pi API completion.`);
+            }
+
+            console.log('Payment completed successfully with Pi API:', response.data);
+            res.json({
+                success: true,
+                message: 'Payment completed',
+                data: response.data
+            });
+        } else { // Payment already marked as 'completed' by Pi
+            // Even if already completed by Pi, ensure our database reflects this.
+            if (userId) {
+                await User.findOneAndUpdate(
+                    { piUserId: userId },
+                    {
+                        isPremium: true,
+                        // lastPaymentDate: new Date(), // Consider if this should be updated or kept from original completion
+                        paymentTxid: finalTxid 
+                    },
+                    { upsert: false }
+                );
+                console.log(`User ${userId} premium status confirmed for already completed payment.`);
+            }
+            res.json({
+                success: true,
+                message: 'Payment was already completed',
+                data: paymentDetailsFromPi
+            });
+        }
+    } catch (error) {
+        console.error(
+            'Error completing payment with Pi API:',
+            error.response ? { status: error.response.status, data: error.response.data } : error.message
+        );
+        res.status(error.response?.status || 500).json({
+            success: false,
+            message: 'Failed to complete payment with Pi API',
+            error: error.response?.data || error.message
+        });
+    }
+};
+
+exports.cancelPayment = async (req, res) => {
+    const { paymentId, userId } = req.body; // Include userId
+    
+    if (!paymentId) {
+        return res.status(400).json({
+            success: false,
+            message: 'Payment ID is required'
+        });
+    }
+
+    try {
+        // Log the cancellation
+        console.log(`Payment cancelled: ${paymentId}${userId ? ` by user: ${userId}` : ''}`);
+        
+        // You might want to update your database to mark this payment as cancelled
+        // For example: await Payment.updateOne({ paymentId }, { status: 'cancelled', cancelledBy: userId });
+        
+        res.json({
+            success: true,
+            message: 'Payment cancellation acknowledged',
+            paymentId
+        });
+    } catch (error) {
+        console.error('Error handling payment cancellation:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Error handling payment cancellation',
+            error: error.message
+        });
+    }
+};
+
+exports.handlePaymentError = async (req, res) => {
+    const { paymentId, error: paymentErrorDetails, userId } = req.body; // Include userId
+    
+    if (!paymentId) {
+        return res.status(400).json({
+            success: false,
+            message: 'Payment ID is required'
+        });
+    }
+
+    try {
+        // Log the error details
+        console.error(`Payment error for ID ${paymentId}${userId ? ` by user: ${userId}` : ''}:`, paymentErrorDetails);
+        
+        // You might want to store this error in your database for tracking
+        // For example: await PaymentError.create({ paymentId, userId, errorDetails: paymentErrorDetails });
+        
+        res.json({
+            success: true,
+            message: 'Payment error logged',
+            paymentId
+        });
+    } catch (error) {
+        console.error('Error handling payment error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Error handling payment error',
+            error: error.message
+        });
+    }
+};

@@ -24,11 +24,20 @@ function handleAuthCallback() {
     } catch (e) {
       console.error('Error decoding JWT:', e);
     }
+<<<<<<< HEAD
       // Remove the token from URL (to prevent accidental sharing)
     window.history.replaceState({}, document.title, '/chat.html');
     
     // Redirect to chat
     window.location.href = '/chat.html';
+=======
+    
+    // Remove the token from URL (to prevent accidental sharing)
+    window.history.replaceState({}, document.title, '/dashboard.html');
+    
+    // Redirect to dashboard
+    window.location.href = '/dashboard.html';
+>>>>>>> f0d38d87b7a8cbf4156ccd4c1cf1b8254d297799
   }
 }
 
@@ -81,9 +90,19 @@ document.addEventListener('DOMContentLoaded', function() {
     handleAuthCallback();
     return;
   }
+<<<<<<< HEAD
   // Protected routes that require authentication
   const protectedRoutes = [
     '/chat.html'
+=======
+  
+  // Protected routes that require authentication
+  const protectedRoutes = [
+    '/dashboard.html',
+    '/chat.html',
+    '/profile.html',
+    '/settings.html'
+>>>>>>> f0d38d87b7a8cbf4156ccd4c1cf1b8254d297799
   ];
   
   // Check if current page is protected

@@ -4,34 +4,35 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1.0">
   <title>TumzyTech - Revolutionizing AI Solutions for Business & Innovation</title>
+  <!-- Pi Network SDK -->
+  <script src="https://sdk.minepi.com/pi-sdk.js"></script>
   <!-- Tailwind CSS 2.2.19 -->
   <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
   <!-- FontAwesome 6.5.2 -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.5.2/css/all.min.css">
   <!-- Google Fonts (Inter) -->
-  <link href="https://cdn.jsdelivr.net/npm/@fontsource/inter@4.5.0/index.min.css" rel="stylesheet">
-  <!-- Chart.js 4.4.3 for visualization -->
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
-  <!-- Include THREE.js Library -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-  <!-- Include GLTFLoader -->
-  <script src="https://cdn.jsdelivr.net/npm/three/examples/js/loaders/GLTFLoader.js"></script>
-  <!-- Add Google Model Viewer Library -->
-  <script type="module" src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js"></script>  <!-- Pi Network SDK -->
-  <script src="https://sdk.minepi.com/pi-sdk.js"></script>
-  <!-- Add Pi Network status element -->
-  <div id="pi-status" class="hidden fixed top-4 right-4 bg-glass p-2 rounded-lg text-white"></div>
-  <link rel="stylesheet" href="assets/css/styles.css">
+  <link href="https://cdn.jsdelivr.net/npm/@fontsource/inter@4.5.0/index.min.css" rel="stylesheet">  <!-- Chart.js 4.4.3 for visualization -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>  <link rel="stylesheet" href="assets/css/styles.css">
+  <script src="assets/js/page-loader.js"></script>
+  <script src="assets/js/error-handler.js"></script>
   <script src="assets/js/scripts.js" defer></script>
   <script src="assets/js/pi-payments.js" defer></script>
-  <link rel="icon" href="assets/pictures/favicon_io (4)/favicon.ico" type="image/x-icon">
-  <link rel="apple-touch-icon" sizes="180x180" href="assets/pictures/favicon_io (4)/apple-touch-icon.png">
-  <link rel="icon" type="image/png" sizes="32x32" href="assets/pictures/favicon_io (4)/favicon-32x32.png">
-  <link rel="icon" type="image/png" sizes="16x16" href="assets/pictures/favicon_io (4)/favicon-16x16.png">
-  <link rel="manifest" href="assets/pictures/favicon_io (4)/site.webmanifest">
-  <link rel="preload" href="assets/pictures/robot plaground.glb" as="fetch" type="model/gltf-binary" crossorigin="anonymous">
-  <link rel="preload" href="assets/pictures/aihelphuman.jpg" as="image" type="image/jpeg">
+  <!-- Favicon and Manifest links (Corrected paths) -->
+  <link rel="icon" href="assets/pictures/favicon/favicon.ico" type="image/x-icon">
+  <link rel="apple-touch-icon" sizes="180x180" href="assets/pictures/favicon/apple-touch-icon.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="assets/pictures/favicon/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="assets/pictures/favicon/favicon-16x16.png">
+  <link rel="manifest" href="assets/pictures/favicon/site.webmanifest">
+  
+  <!-- Preload critical assets -->
+  <link rel="preload" href="assets/pictures/robot_playground_backup.glb" as="fetch" type="model/gltf-binary" crossorigin="anonymous">
+  <link rel="preload" href="assets/pictures/aihelphuman.jpg" as="image" fetchpriority="high">
   <link rel="preload" href="assets/videos/background-video.mp4" as="video" type="video/mp4">
+  
+  <!-- Use preconnect for external domains -->
+  <link rel="preconnect" href="https://unpkg.com">
+  <link rel="preconnect" href="https://cdn.jsdelivr.net">
+
   <meta name="description" content="TumzyTech - Revolutionizing AI Solutions for Business & Innovation. Explore AI-driven services, products, and solutions for businesses and individuals.">
   <style>
     /* Adjust text and background colors for better contrast */
@@ -903,22 +904,24 @@
       <li><a href="#products">Products</a></li>
       <li><a href="#contact">Contact</a></li>
       <li><a href="#careers">Careers</a></li>
+      <li><a href="#" id="authModalLink">Sign In / Sign Up</a></li>
+      <li><span id="auth-status" class="text-sm ml-4"></span></li>
     </ul>
     <button class="get-started glow-btn" onclick="location.href='#mission'">Get Started</button>
   </nav>
-
   <!-- 3D Logo Section -->
   <div class="centered-3d-model mt-10">
-    <model-viewer 
-      src="assets/pictures/robot plaground.glb" 
-      alt="3D Model of a robot playground" 
-      auto-rotate 
-      autoplay 
-      disable-zoom 
-      camera-controls="false" 
-      interaction-prompt="none" 
-      style="width: 100%; max-width: 400px; height: 100%;">
-    </model-viewer>
+    <!-- Alternative: Use a smaller placeholder or remove the 3D model for now -->
+    <div style="width: 100%; max-width: 400px; height: 250px; background: linear-gradient(135deg, #9333ea, #4c1d95); border-radius: 20px; display: flex; align-items: center; justify-content: center; color: white; font-size: 24px; font-weight: bold;">
+      <i class="fas fa-robot" style="font-size: 48px; margin-right: 10px;"></i>
+      TumzyTech AI
+    </div>
+    <style>
+      @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+      }
+    </style>
     <noscript>
       <p>Your browser does not support JavaScript or 3D models. Please enable JavaScript or use a modern browser to view this content.</p>
     </noscript>
@@ -972,7 +975,7 @@
       <div class="text-center mb-10">
         <h2 class="text-3xl md:text-4xl font-extrabold mb-2">Let's Work Together</h2>
         <p class="text-lg text-gray-200">
-          Explore TumzyTech’s core AI-driven services. Accelerate growth, foster innovation, and gain unparalleled insights with our cutting-edge solutions.
+          Explore TumzyTech's core AI-driven services. Accelerate growth, foster innovation, and gain unparalleled insights with our cutting-edge solutions.
         </p>
       </div>
       <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-7">        <!-- Service Card -->
@@ -1102,14 +1105,62 @@
     </div>
   </section>
 
+  <!-- Authentication Modal -->
+  <div id="authModal" class="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center z-50 hidden">
+    <div class="bg-glass p-8 rounded-xl shadow-2xl w-full max-w-md mx-4">
+      <div class="flex justify-between items-center mb-6">
+        <h2 id="authModalTitle" class="text-2xl font-bold text-white">Sign In</h2>
+        <button id="closeAuthModal" class="text-gray-400 hover:text-white text-2xl">&times;</button>
+      </div>
+
+      <!-- Tab Buttons -->
+      <div class="mb-6">
+        <button id="signInTabButton" class="px-4 py-2 text-white border-b-2 border-purple-500 font-semibold">Sign In</button>
+        <button id="signUpTabButton" class="px-4 py-2 text-gray-400 hover:text-white font-semibold">Sign Up</button>
+      </div>
+
+      <!-- Sign In Form -->
+      <form id="signInForm">
+        <div class="mb-4">
+          <label for="signInEmail" class="block text-sm font-medium text-gray-300 mb-1">Email</label>
+          <input type="email" id="signInEmail" name="email" required class="w-full px-3 py-2 bg-gray-700 text-white border border-gray-600 rounded-md focus:ring-purple-500 focus:border-purple-500">
+        </div>
+        <div class="mb-6">
+          <label for="signInPassword" class="block text-sm font-medium text-gray-300 mb-1">Password</label>
+          <input type="password" id="signInPassword" name="password" required class="w-full px-3 py-2 bg-gray-700 text-white border border-gray-600 rounded-md focus:ring-purple-500 focus:border-purple-500">
+        </div>
+        <button type="submit" class="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded-md transition duration-300">Sign In</button>
+        <p id="signInError" class="text-red-500 text-sm mt-2"></p>
+      </form>
+
+      <!-- Sign Up Form (hidden by default) -->
+      <form id="signUpForm" class="hidden">
+        <div class="mb-4">
+          <label for="signUpName" class="block text-sm font-medium text-gray-300 mb-1">Name</label>
+          <input type="text" id="signUpName" name="name" required class="w-full px-3 py-2 bg-gray-700 text-white border border-gray-600 rounded-md focus:ring-purple-500 focus:border-purple-500">
+        </div>
+        <div class="mb-4">
+          <label for="signUpEmail" class="block text-sm font-medium text-gray-300 mb-1">Email</label>
+          <input type="email" id="signUpEmail" name="email" required class="w-full px-3 py-2 bg-gray-700 text-white border border-gray-600 rounded-md focus:ring-purple-500 focus:border-purple-500">
+        </div>
+        <div class="mb-6">
+          <label for="signUpPassword" class="block text-sm font-medium text-gray-300 mb-1">Password</label>
+          <input type="password" id="signUpPassword" name="password" required class="w-full px-3 py-2 bg-gray-700 text-white border border-gray-600 rounded-md focus:ring-purple-500 focus:border-purple-500">
+        </div>
+        <button type="submit" class="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded-md transition duration-300">Sign Up</button>
+        <p id="signUpError" class="text-red-500 text-sm mt-2"></p>
+      </form>
+    </div>
+  </div>
+
   <!-- CONTACT FORM SECTION -->
   <section id="contact" class="relative py-16 z-10">
     <div class="max-w-3xl mx-auto bg-glass rounded-3xl px-8 py-12 shadow-2xl text-center">
       <h2 class="text-2xl font-bold mb-3">Experience the Future Today</h2>
       <p class="mb-8 text-gray-200">
-        Ready to unlock your goals with TumzyTech’s AI solutions? Let’s connect and power your project with the latest in artificial intelligence.
+        Ready to unlock your goals with TumzyTech's AI solutions? Let's connect and power your project with the latest in artificial intelligence.
       </p>
-      <form class="space-y-5" method="POST" action="mailto:contact@tumzytech.com" enctype="text/plain">
+      <form class="space-y-5" id="contactForm" onsubmit="handleContactForm(event)">
         <div class="flex gap-3">
           <input type="text" name="Name" id="name" autocomplete="name" required class="flex-1 px-3 py-2 rounded-md bg-gray-800 text-white border border-gray-700 focus:border-cyan-400 transition focus:outline-none" placeholder="Your Name">
           <input type="email" name="Email" id="email" autocomplete="email" required class="flex-1 px-3 py-2 rounded-md bg-gray-800 text-white border border-gray-700 focus:border-cyan-400 transition focus:outline-none" placeholder="Your Email">
@@ -1167,150 +1218,5 @@
       </a>
     </div>
   </footer>
-
-  <!-- SCRIPTS: Particles, Chart.js Demo, Interactive Animations -->
-  <script>
-    // AI Particle System (simple neural effect)
-    const canvas = document.getElementById('particles-bg');
-    const ctx = canvas.getContext('2d');
-    let w = canvas.width = window.innerWidth;
-    let h = canvas.height = window.innerHeight;
-    let particles = [];
-    const pCount = 60;
-    const maxDist = 160;
-    function randColor(){
-      const colors=['#38bdf8','#a21caf','#f472b6','#f3e8ff','#4338ca','#818cf8'];
-      return colors[Math.floor(Math.random()*colors.length)];
-    }
-    function Particle(){
-      this.x = Math.random()*w;
-      this.y = Math.random()*h;
-      this.vx = (Math.random()-0.5)*1.3, this.vy = (Math.random()-0.5)*1.3;
-      this.radius = 1.8 + Math.random()*2.2;
-      this.color = randColor();
-    }
-    Particle.prototype.draw = function(){
-      ctx.beginPath();
-      ctx.arc(this.x, this.y, this.radius, 0, Math.PI*2, false);
-      ctx.fillStyle = this.color + "66";
-      ctx.shadowColor = this.color;
-      ctx.shadowBlur = 8;
-      ctx.fill();
-      ctx.shadowBlur = 0;
-    };
-    function drawLines(a, b){
-      const dist = Math.hypot(a.x-b.x, a.y-b.y);
-      if(dist<maxDist){
-        ctx.beginPath();
-        ctx.moveTo(a.x, a.y);
-        ctx.lineTo(b.x, b.y);
-        ctx.strokeStyle = "#fff2";
-        ctx.lineWidth = 1;
-        ctx.stroke();
-      }
-    }
-    function animateParticles(){
-      ctx.clearRect(0,0,w,h);
-      for(let i=0;i<particles.length;i++){
-        let p=particles[i];
-        p.x+=p.vx;p.y+=p.vy;
-        if(p.x<0||p.x>w)p.vx*=-1;
-        if(p.y<0||p.y>h)p.vy*=-1;
-        p.draw();
-        for(let j=i+1;j<particles.length;j++){
-          drawLines(p, particles[j]);
-        }
-      }
-      requestAnimationFrame(animateParticles);
-    }
-    function initParticles(){
-      particles = [];
-      for(let i=0;i<pCount;i++){particles.push(new Particle());}
-      animateParticles();
-    }
-    window.addEventListener('resize',() => {
-      w = canvas.width = window.innerWidth;
-      h = canvas.height = window.innerHeight;
-      initParticles();
-    });
-    initParticles();
-
-    // Cursor Particle Trail Effect
-    const cursorParticles = [];
-    document.addEventListener('mousemove', function(e){
-      cursorParticles.push({x: e.clientX, y: e.clientY, alpha: 1, radius: 7+Math.random()*9, color: randColor()});
-      if(cursorParticles.length > 21) cursorParticles.shift();
-    });
-    function drawCursorParticles(){
-      for(let i=0;i<cursorParticles.length;i++){
-        const p = cursorParticles[i];
-        ctx.beginPath();
-        ctx.arc(p.x, p.y, p.radius * p.alpha, 0, 2 * Math.PI);
-        ctx.fillStyle = p.color + Math.floor(p.alpha * 256).toString(16).padStart(2,'0');
-        ctx.globalAlpha = p.alpha * 0.4;
-        ctx.fill();
-        p.alpha *= 0.93;
-        ctx.globalAlpha = 1;
-      }
-      requestAnimationFrame(drawCursorParticles);
-    }
-    drawCursorParticles();
-
-    // Chart.js Market Trend Demo
-    window.addEventListener('DOMContentLoaded', function() {
-      const ctx = document.getElementById('marketChart').getContext('2d');
-      new Chart(ctx, {
-        type: 'line',
-        data: {
-          labels: ['2022Q1','2022Q2','2022Q3','2022Q4','2023Q1','2023Q2','2023Q3'],
-          datasets: [{
-            label: 'AI Adoption Index',
-            data: [16, 23, 27, 31, 45, 51, 63],
-            fill: true,
-            tension: 0.4,
-            backgroundColor: 'rgba(37,99,235,0.28)',
-            borderColor: '#38bdf8',
-            pointBackgroundColor: '#a21caf',
-            pointBorderColor: '#fff',
-            pointRadius: 4,
-            borderWidth: 3
-          }]
-        },
-        options: {
-          plugins: {
-            legend: {display: true, labels: {color:'#fff', font:{size:14, family:"Inter"}}},
-          },
-          scales: {
-            x: { grid: { color:'#4f46e5', drawOnChartArea:false }, ticks:{color:'#e0e7ef'} },
-            y: { grid: { color:'#47556911' }, ticks: {color:'#e0e7ef'} }
-          }
-        }
-      });
-    });
-
-    // Sign-in Modal Script
-    const signinButton = document.getElementById('signinButton');
-    const signinPage = document.getElementById('signinPage');
-    const closeIcon = document.getElementById('closeIcon');
-
-    if (signinButton) {
-      signinButton.addEventListener('click', () => {
-        signinPage.classList.remove('closeSignin');
-      });
-    }
-
-    if (closeIcon) {
-      closeIcon.addEventListener('click', () => {
-        signinPage.classList.add('closeSignin');
-      });
-    }
-
-    // Lazy load the full background image
-    window.addEventListener('load', function() {
-      const bgImage = document.querySelector('.background-image');
-      bgImage.style.display = 'block';
-      bgImage.src = 'assets/pictures/robot.png';
-    });
-  </script>
 </body>
 </html>

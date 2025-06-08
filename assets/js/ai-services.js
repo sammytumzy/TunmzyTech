@@ -94,8 +94,14 @@ function showUpgradePrompt() {
     document.querySelector('#upgrade-modal .close').addEventListener('click', function() {
       document.getElementById('upgrade-modal').style.display = 'none';
     });
+<<<<<<< HEAD
       document.getElementById('upgrade-button').addEventListener('click', function() {
       window.location.href = '/chat.html';
+=======
+    
+    document.getElementById('upgrade-button').addEventListener('click', function() {
+      window.location.href = '/pricing.html';
+>>>>>>> f0d38d87b7a8cbf4156ccd4c1cf1b8254d297799
     });
     
     modal.style.display = 'block';

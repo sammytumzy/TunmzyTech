@@ -3,7 +3,11 @@ import "./App.css";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import axios from "axios";
 
+<<<<<<< HEAD
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:5000';
+=======
+const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:8001';
+>>>>>>> f0d38d87b7a8cbf4156ccd4c1cf1b8254d297799
 const API = `${BACKEND_URL}/api`;
 
 // Pi Network Service

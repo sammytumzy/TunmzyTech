@@ -6,7 +6,7 @@ html, body {
 /* Update chat page background to make the robot picture fuller */
 body {
   background-color: #121212; /* Set a dark background color */
-  background: url('../pictures/robot.png') no-repeat center center fixed;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   background-size: cover;
   color: #ffffff; /* Ensure text is readable on dark background */
   padding: 20px; /* Add padding around the body for better spacing */
@@ -444,6 +444,7 @@ img, video {
   width: 100%; /* Ensure the navbar spans the full width */
   background-color: #0f0f1b; /* Retain the black background */
   padding: 16px 32px; /* Ensure consistent padding for the navbar */
+  z-index: 1000; /* Ensure navbar is above other content */
 }
 
 /* Add padding to footer */
@@ -458,6 +459,11 @@ img, video {
   body {
     background-size: contain; /* Ensure the robot image fits within the screen */
     background-position: top center; /* Center the image for better visibility */
+  }
+
+  /* Ensure mobile navigation menu is above other elements */
+  .nav-links.active {
+    z-index: 1001; /* Higher than navbar and logo canvas */
   }
 }
 
