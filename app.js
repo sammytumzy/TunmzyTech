@@ -1,12 +1,16 @@
 const express = require('express');
 const dotenv = require('dotenv');
 const path = require('path');
+const { applySecurityMiddleware } = require('./middlewares/security');
 
 // Load environment variables
 dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 5000;
+
+// Apply security middleware first
+applySecurityMiddleware(app);
 
 // Middleware
 app.use(express.json());
@@ -58,8 +62,8 @@ app.use('/api/*', (req, res) => {
 // Database connection - temporarily disabled for development
 console.log('Running without MongoDB in development mode');
 
-// Start server with error handling
-const server = app.listen(PORT, () => {
+// Start server
+app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
   console.log(`
 App URLs:
@@ -68,9 +72,11 @@ App URLs:
   `);
 }).on('error', (err) => {
   if (err.code === 'EADDRINUSE') {
-    console.log(`Port ${PORT} is busy. Trying port ${PORT + 1}...`);
-    server.listen(PORT + 1);
+    console.error(`Port ${PORT} is already in use. Please kill existing processes or use a different port.`);
+    console.error('To kill Node processes on Windows: taskkill /F /IM node.exe');
+    process.exit(1);
   } else {
     console.error('Server error:', err);
+    process.exit(1);
   }
 });
