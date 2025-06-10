@@ -76,7 +76,14 @@ class PiPaymentManager {
                 ]);
             }
             console.log('Pi SDK initialized successfully (or was already initialized).');
-            this.createPaymentButton();
+            // If the modal placeholder exists, use it for the payment button
+            const modalPlaceholder = document.getElementById('pi-payment-button-placeholder-modal');
+            if (modalPlaceholder) {
+                this.paymentButton = null; // Remove any previous button
+                this.createPaymentButton(modalPlaceholder);
+            } else {
+                this.createPaymentButton();
+            }
         } catch (error) {
             console.warn('Pi SDK initialization failed:', error.message);
             this.createFallbackButton();
@@ -338,10 +345,10 @@ class PiPaymentManager {
         this.resetButton();
     }
 
-    createPaymentButton() {
+    createPaymentButton(overrideContainer) {
         const placeholder = document.getElementById('pi-payment-button-placeholder');
         const chatContainer = document.querySelector('.chat-container');
-        const targetContainer = placeholder || chatContainer;
+        const targetContainer = overrideContainer || placeholder || chatContainer;
         if (!targetContainer) {
             console.error('Pi payment button container not found (expected #pi-payment-button-placeholder or .chat-container).');
             return;
