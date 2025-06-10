@@ -1,112 +1,17 @@
 /**
-<<<<<<< HEAD
  * Pi Network Payment Integration for TumzyTech AI Tools
  * Handles Pi Network authentication and payment flows
-=======
- * Pi Network Payment Integration
- * Handles premium feature payments through Pi Network SDK
->>>>>>> f0d38d87b7a8cbf4156ccd4c1cf1b8254d297799
  */
 
 class PiPaymentManager {
     constructor() {
-<<<<<<< HEAD
-        this.piSDK = null;
-        this.isInitialized = false;
-        this.currentUser = null;
-        this.accessToken = null;
-        this.paymentInProgress = false;
-    }
-
-    /**
-     * Initialize Pi Network SDK
-     */
-    async init() {
-        try {
-            if (typeof window.Pi === 'undefined') {
-                throw new Error('Pi Network SDK not loaded');
-            }
-
-            this.piSDK = window.Pi;
-            await this.piSDK.init({
-                version: "2.0",
-                sandbox: true, // Set to false for production
-                onIncompletePaymentFound: this.handleIncompletePayment.bind(this)
-            });
-
-            this.isInitialized = true;
-            console.log('Pi Network SDK initialized successfully');
-            return true;
-        } catch (error) {
-            console.error('Failed to initialize Pi Network SDK:', error);
-            return false;
-        }
-    }
-
-    /**
-     * Authenticate user with Pi Network
-     */
-    async authenticate() {
-        try {
-            if (!this.isInitialized) {
-                await this.init();
-            }
-
-            const scopes = ['username', 'payments'];
-            const auth = await this.piSDK.authenticate(scopes, this.handleIncompletePayment.bind(this));
-            
-            this.currentUser = auth.user;
-            this.accessToken = auth.accessToken;
-            
-            // Store globally for other scripts
-            window.piUser = auth.user;
-            window.piAccessToken = auth.accessToken;
-
-            // Send authentication data to backend
-            await this.sendAuthToBackend(auth);
-
-            console.log('Pi Network authentication successful:', auth.user.username);
-            return auth;
-        } catch (error) {
-            console.error('Pi Network authentication failed:', error);
-            throw error;
-        }
-    }
-
-    /**
-     * Send authentication data to backend
-     */
-    async sendAuthToBackend(auth) {
-        try {
-            const response = await fetch('/api/pi/auth', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${auth.accessToken}`
-                },
-                body: JSON.stringify({
-                    user: auth.user,
-                    accessToken: auth.accessToken
-                })
-            });
-
-            const result = await response.json();
-            if (!result.success) {
-                console.error('Backend authentication failed:', result.message);
-            }
-            return result;
-        } catch (error) {
-            console.error('Error sending auth to backend:', error);
-=======
         this.isAuthenticated = false;
         this.userInfo = null;
         this.isProcessing = false;
         this.paymentButton = null;
         this.token = localStorage.getItem('token'); // Store token for API calls
-        
         // Check if we're in a Pi Browser environment
-        this.isPiBrowser = this.checkPiBrowserEnvironment(); // isPiBrowser is set here
-        
+        this.isPiBrowser = this.checkPiBrowserEnvironment();
         // Initialize when DOM is ready
         if (document.readyState === 'loading') {
             document.addEventListener('DOMContentLoaded', () => this.initialize());
@@ -118,36 +23,36 @@ class PiPaymentManager {
     checkPiBrowserEnvironment() {
         const userAgent = navigator.userAgent.toLowerCase();
         const isPiBrowser = userAgent.includes('pi browser') || userAgent.includes('pi network');
-        
         // For development/testing purposes, also allow localhost and github pages
         const isDevelopment = window.location.hostname === 'localhost' || 
                              window.location.hostname.includes('github.io') ||
                              window.location.hostname.includes('127.0.0.1');
-        
         if (!isPiBrowser && isDevelopment) {
             console.warn('Development environment detected - Pi payments may not work fully');
         }
-        
         return isPiBrowser || isDevelopment;
     }
 
     async initialize() {
         console.log('Initializing Pi Payment Manager...');
-
-        // Check for token and redirect if not found
+        // Check for token and use Pi Network authentication if not found
         if (!this.token) {
-            console.warn('No authentication token found. Redirecting to login.');
-            window.location.href = '/login.html'; // Ensure this path is correct for your application
-            return; // Stop initialization
+            console.warn('No authentication token found. Initiating Pi Network authentication.');
+            await this.authenticateUser(); // Use Pi Network authentication instead of redirecting
+            // After authentication, update token if available
+            this.token = localStorage.getItem('token');
+            if (!this.token) {
+                this.showNotification('Authentication failed: No token received. Please try again in Pi Browser.', 'error');
+                this.setUnauthenticatedState();
+                return;
+            }
         }
-        
         // Wait for Pi SDK to be available with timeout
         const waitForPiSDK = () => {
             return new Promise((resolve, reject) => {
                 const timeout = setTimeout(() => {
                     reject(new Error('Pi SDK loading timeout'));
                 }, 10000); // 10 second timeout
-                
                 const checkSDK = () => {
                     if (typeof window.Pi !== 'undefined') {
                         clearTimeout(timeout);
@@ -159,13 +64,9 @@ class PiPaymentManager {
                 checkSDK();
             });
         };
-        
         try {
             await waitForPiSDK();
-            
             // Initialize Pi SDK with proper error handling
-            // Ensure sandbox: true is used, as per previous file state.
-            // Check if already initialized to prevent re-initialization errors.
             if (window.Pi && !window.Pi.isInitialized) { 
                 await Promise.race([
                     window.Pi.init({ version: "2.0", sandbox: true }),
@@ -175,13 +76,11 @@ class PiPaymentManager {
                 ]);
             }
             console.log('Pi SDK initialized successfully (or was already initialized).');
-            this.createPaymentButton(); // Create the main payment button if SDK is ready
-            
+            this.createPaymentButton();
         } catch (error) {
             console.warn('Pi SDK initialization failed:', error.message);
-            this.createFallbackButton(); // Create fallback if SDK init fails
+            this.createFallbackButton();
         } finally {
-            // Always try to fetch user data to update UI regardless of Pi SDK status
             try {
                 await this.getUserData();
             } catch (userDataError) {
@@ -191,63 +90,69 @@ class PiPaymentManager {
     }
 
     async authenticateUser() {
+        if (typeof window.Pi === 'undefined') {
+            this.showNotification('Pi SDK not found. Please open this app in Pi Browser.', 'error');
+            this.setUnauthenticatedState();
+            throw new Error('Pi SDK not found');
+        }
         if (this.isAuthenticated && this.userInfo) {
             console.log('User already authenticated');
             return this.userInfo;
         }
-        
         try {
             console.log('Authenticating Pi user...');
-            
-            const scopes = ['payments', 'username']; // Added username scope if needed for userInfo.username
-            
-            // Add timeout to authentication
+            // As per Pi Network docs: https://developers.minepi.com/docs/pi-platform/pi-apps/authentication
+            const scopes = ['payments', 'username'];
             const authResult = await Promise.race([
                 window.Pi.authenticate(scopes, this.onIncompletePaymentFound.bind(this)),
                 new Promise((_, reject) => 
                     setTimeout(() => reject(new Error('Authentication timeout')), 30000)
                 )
             ]);
-            
             this.isAuthenticated = true;
             this.userInfo = authResult.user;
-            
-            // Store user info for session
-            localStorage.setItem('piUser', JSON.stringify(this.userInfo)); // Contains uid, username
+            // Store token if provided by Pi SDK (as per latest docs)
+            if (authResult.accessToken) {
+                this.token = authResult.accessToken;
+                localStorage.setItem('token', this.token);
+            }
+            localStorage.setItem('piUser', JSON.stringify(this.userInfo));
             localStorage.setItem('piAuthenticated', 'true');
-            
             console.log('Pi user authenticated successfully:', this.userInfo);
             return this.userInfo;
-            
         } catch (error) {
             console.error('Pi authentication failed:', error);
             this.isAuthenticated = false;
             this.userInfo = null;
-            
-            // Clean up storage on failed auth
             localStorage.removeItem('piUser');
             localStorage.removeItem('piAuthenticated');
-            
-            // Handle specific error types
-            if (error.message.includes('timeout')) {
+            this.setUnauthenticatedState();
+            if (error.message && error.message.includes('timeout')) {
                 throw new Error('Authentication timed out. Please try again or ensure you are using Pi Browser.');
-            } else if (error.message.includes('User cancelled')) {
+            } else if (error.message && error.message.includes('User cancelled')) {
                 throw new Error('Authentication was cancelled.');
             } else {
                 throw new Error('Authentication failed. Please ensure you are using Pi Browser.');
             }
         }
     }
-    
+
+    setUnauthenticatedState() {
+        if (this.paymentButton) {
+            this.paymentButton.disabled = true;
+            this.updateButtonText('Pi Authentication Required');
+        }
+        const piAuthStatusEl = document.getElementById('pi-auth-status');
+        if (piAuthStatusEl) {
+            piAuthStatusEl.textContent = 'Not authenticated with Pi';
+            piAuthStatusEl.className = 'status-not-authenticated';
+        }
+    }
+
     async onIncompletePaymentFound(payment) {
         console.log('Incomplete payment found:', payment);
         this.showNotification('Incomplete payment found, attempting to complete...', 'info');
         try {
-            // Complete the incomplete payment
-            // Server approval and completion should be handled here as well
-            // For simplicity, directly calling server completion, assuming approval was done.
-            // This might need a more robust flow depending on your backend logic for incomplete payments.
-
             this.updateButtonText('Completing previous payment...');
             const response = await fetch('/api/pi-payments/complete', {
                 method: 'POST',
@@ -257,438 +162,45 @@ class PiPaymentManager {
                 },
                 body: JSON.stringify({
                     paymentId: payment.identifier,
-                    txid: payment.transaction ? payment.transaction.txid : null, // txid might not be available yet
+                    txid: payment.transaction ? payment.transaction.txid : null,
                     userId: this.userInfo?.uid 
                 })
             });
-
             if (!response.ok) {
                 const errorData = await response.json();
                 throw new Error(errorData.message || 'Failed to complete incomplete payment on server.');
             }
-            
             const completedPaymentData = await response.json();
             console.log('Incomplete payment server completion response:', completedPaymentData);
-            
-            this.handlePaymentSuccess({ paymentId: payment.identifier, txid: payment.transaction ? payment.transaction.txid : completedPaymentData.txid }); // Use txid from server if available
-            
+            this.handlePaymentSuccess({ paymentId: payment.identifier, txid: payment.transaction ? payment.transaction.txid : completedPaymentData.txid });
             return completedPaymentData;
         } catch (error) {
             console.error('Failed to complete incomplete payment:', error);
             this.handlePaymentError(new Error(`Failed to process incomplete payment: ${error.message}`));
->>>>>>> f0d38d87b7a8cbf4156ccd4c1cf1b8254d297799
             throw error;
         }
     }
 
-<<<<<<< HEAD
-    /**
-     * Create and process a payment
-     */
-    async createPayment(paymentType = 'singleSession') {
-        try {
-            if (!this.currentUser) {
-                await this.authenticate();
-            }
-
-            if (this.paymentInProgress) {
-                throw new Error('Payment already in progress');
-            }
-
-            this.paymentInProgress = true;
-
-            // Get payment details from backend
-            const paymentData = await this.getPaymentDetails(paymentType);
-            
-            // Create payment with Pi SDK
-            const payment = await this.piSDK.createPayment({
-                amount: paymentData.amount,
-                memo: paymentData.memo,
-                metadata: paymentData.metadata
-            });
-
-            console.log('Payment created:', payment);
-
-            // Approve payment
-            await this.approvePayment(payment.identifier);
-
-            // Complete payment
-            await this.completePayment(payment.identifier);
-
-            this.paymentInProgress = false;
-            return payment;
-        } catch (error) {
-            this.paymentInProgress = false;
-            console.error('Payment creation failed:', error);
-            throw error;
-        }
-    }
-
-    /**
-     * Get payment details from backend
-     */
-    async getPaymentDetails(paymentType) {
-        try {
-            const response = await fetch('/api/pi/create-payment', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${this.accessToken}`
-                },
-                body: JSON.stringify({
-                    paymentType,
-                    uid: this.currentUser?.uid
-                })
-            });
-
-            const result = await response.json();
-            if (!result.success) {
-                throw new Error(result.message);
-            }
-
-            return result.paymentData;
-        } catch (error) {
-            console.error('Error getting payment details:', error);
-            throw error;
-        }
-    }
-
-    /**
-     * Approve payment with backend
-     */
-    async approvePayment(paymentId) {
-        try {
-            const response = await fetch('/api/pi/approve', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${this.accessToken}`
-                },
-                body: JSON.stringify({ paymentId })
-            });
-
-            const result = await response.json();
-            if (!result.success) {
-                throw new Error(result.message);
-            }
-
-            console.log('Payment approved:', paymentId);
-            return result;
-        } catch (error) {
-            console.error('Payment approval failed:', error);
-            throw error;
-        }
-    }
-
-    /**
-     * Complete payment with backend
-     */
-    async completePayment(paymentId, txid = null) {
-        try {
-            // If no txid provided, get it from the payment
-            if (!txid) {
-                const paymentDetails = await this.piSDK.getPayment(paymentId);
-                txid = paymentDetails.transaction?.txid;
-            }
-
-            const response = await fetch('/api/pi/complete', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${this.accessToken}`
-                },
-                body: JSON.stringify({ paymentId, txid })
-            });
-
-            const result = await response.json();
-            if (!result.success) {
-                throw new Error(result.message);
-            }
-
-            console.log('Payment completed:', paymentId);
-            return result;
-        } catch (error) {
-            console.error('Payment completion failed:', error);
-            throw error;
-        }
-    }
-
-    /**
-     * Handle incomplete payments found during initialization
-     */
-    async handleIncompletePayment(payment) {
-        try {
-            console.log('Handling incomplete payment:', payment);
-
-            if (payment.status === 'created') {
-                await this.approvePayment(payment.identifier);
-            } else if (payment.status === 'approved') {
-                await this.completePayment(
-                    payment.identifier, 
-                    payment.transaction?.txid
-                );
-            }
-        } catch (error) {
-            console.error('Error handling incomplete payment:', error);
-        }
-    }
-
-    /**
-     * Check subscription status
-     */
-    async checkSubscriptionStatus() {
-        try {
-            if (!this.accessToken) {
-                return { subscriptionActive: false };
-            }
-
-            const response = await fetch('/api/pi/subscription-status', {
-                method: 'GET',
-                headers: {
-                    'Authorization': `Bearer ${this.accessToken}`
-                }
-            });
-
-            const result = await response.json();
-            return result;
-        } catch (error) {
-            console.error('Error checking subscription status:', error);
-            return { subscriptionActive: false };
-        }
-    }
-
-    /**
-     * Get payment history
-     */
-    async getPaymentHistory() {
-        try {
-            if (!this.accessToken) {
-                return { paymentHistory: [] };
-            }
-
-            const response = await fetch('/api/pi/payment-history', {
-                method: 'GET',
-                headers: {
-                    'Authorization': `Bearer ${this.accessToken}`
-                }
-            });
-
-            const result = await response.json();
-            return result;
-        } catch (error) {
-            console.error('Error getting payment history:', error);
-            return { paymentHistory: [] };
-        }
-    }
-
-    /**
-     * Show payment modal with options
-     */
-    showPaymentModal() {
-        const modal = document.createElement('div');
-        modal.className = 'pi-payment-modal';
-        modal.innerHTML = `
-            <div class="pi-payment-content">
-                <div class="pi-payment-header">
-                    <h3>Choose Your Access Plan</h3>
-                    <button class="pi-close-btn">&times;</button>
-                </div>
-                <div class="pi-payment-options">
-                    <div class="pi-payment-option" data-type="singleSession">
-                        <h4>Single Session</h4>
-                        <p class="pi-price">1 π</p>
-                        <p>One-time access to AI tools</p>
-                        <button class="pi-pay-btn">Pay with Pi</button>
-                    </div>
-                    <div class="pi-payment-option" data-type="chatSubscription">
-                        <h4>Full Access</h4>
-                        <p class="pi-price">0.5 π</p>
-                        <p>Complete access to all AI tools</p>
-                        <button class="pi-pay-btn">Pay with Pi</button>
-                    </div>
-                </div>
-                <div class="pi-payment-status" style="display: none;">
-                    <p>Processing payment...</p>
-                </div>
-            </div>
-        `;
-
-        // Add styles
-        const styles = `
-            .pi-payment-modal {
-                position: fixed;
-                top: 0;
-                left: 0;
-                width: 100%;
-                height: 100%;
-                background: rgba(0,0,0,0.8);
-                display: flex;
-                justify-content: center;
-                align-items: center;
-                z-index: 10000;
-            }
-            .pi-payment-content {
-                background: white;
-                padding: 30px;
-                border-radius: 15px;
-                max-width: 500px;
-                width: 90%;
-                box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-            }
-            .pi-payment-header {
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-                margin-bottom: 20px;
-                border-bottom: 2px solid #f0f0f0;
-                padding-bottom: 15px;
-            }
-            .pi-close-btn {
-                background: none;
-                border: none;
-                font-size: 24px;
-                cursor: pointer;
-                color: #999;
-            }
-            .pi-payment-options {
-                display: grid;
-                grid-template-columns: 1fr 1fr;
-                gap: 20px;
-                margin-bottom: 20px;
-            }
-            .pi-payment-option {
-                border: 2px solid #e0e0e0;
-                padding: 20px;
-                border-radius: 10px;
-                text-align: center;
-                transition: all 0.3s ease;
-            }
-            .pi-payment-option:hover {
-                border-color: #ffc72c;
-                transform: translateY(-2px);
-            }
-            .pi-price {
-                font-size: 24px;
-                font-weight: bold;
-                color: #ffc72c;
-                margin: 10px 0;
-            }
-            .pi-pay-btn {
-                background: #ffc72c;
-                color: black;
-                border: none;
-                padding: 10px 20px;
-                border-radius: 5px;
-                cursor: pointer;
-                font-weight: bold;
-                width: 100%;
-                margin-top: 10px;
-            }
-            .pi-pay-btn:hover {
-                background: #e6b329;
-            }
-            .pi-payment-status {
-                text-align: center;
-                padding: 20px;
-                font-weight: bold;
-            }
-        `;
-
-        // Add styles to document
-        const styleSheet = document.createElement('style');
-        styleSheet.textContent = styles;
-        document.head.appendChild(styleSheet);
-
-        // Add event listeners
-        modal.querySelector('.pi-close-btn').addEventListener('click', () => {
-            document.body.removeChild(modal);
-        });
-
-        modal.addEventListener('click', (e) => {
-            if (e.target === modal) {
-                document.body.removeChild(modal);
-            }
-        });
-
-        modal.querySelectorAll('.pi-pay-btn').forEach(btn => {
-            btn.addEventListener('click', async (e) => {
-                const paymentType = e.target.closest('.pi-payment-option').dataset.type;
-                const statusDiv = modal.querySelector('.pi-payment-status');
-                
-                try {
-                    statusDiv.style.display = 'block';
-                    statusDiv.innerHTML = '<p>Processing payment...</p>';
-                    
-                    await this.createPayment(paymentType);
-                    
-                    statusDiv.innerHTML = '<p style="color: green;">Payment successful! Redirecting...</p>';
-                    
-                    setTimeout(() => {
-                        document.body.removeChild(modal);
-                        window.location.href = '/chat.html';
-                    }, 2000);
-                } catch (error) {
-                    statusDiv.innerHTML = `<p style="color: red;">Payment failed: ${error.message}</p>`;
-                }
-            });
-        });
-
-        document.body.appendChild(modal);
-    }
-
-    /**
-     * Check if user has access to AI tools
-     */
-    async hasAccess() {
-        try {
-            const status = await this.checkSubscriptionStatus();
-            return status.subscriptionActive;
-        } catch (error) {
-            console.error('Error checking access:', error);
-            return false;
-        }
-    }
-}
-
-// Create global instance
-window.piPaymentManager = new PiPaymentManager();
-
-// Auto-initialize when Pi SDK is available
-document.addEventListener('DOMContentLoaded', async () => {
-    if (typeof window.Pi !== 'undefined') {
-        try {
-            await window.piPaymentManager.init();
-        } catch (error) {
-            console.error('Failed to auto-initialize Pi Payment Manager:', error);
-        }
-    }
-});
-
-// Export for use in other scripts
-if (typeof module !== 'undefined' && module.exports) {
-    module.exports = PiPaymentManager;
-}
-=======
     async createPayment() {
+        await this.authenticateUser();
+        if (!this.userInfo) {
+            this.handlePaymentError(new Error('User not authenticated. Please sign in with Pi.'));
+            this.setUnauthenticatedState();
+            throw new Error('User not authenticated.');
+        }
         try {
-            // Ensure user is authenticated first
-            await this.authenticateUser();
-            
             const paymentData = {
-                amount: 1, // Example amount, adjust as needed
+                amount: 1,
                 memo: "TumzyTech Premium Access - Unlock advanced AI features",
                 metadata: {
                     orderId: `order_${Date.now()}`,
                     productId: 'premium_access',
-                    userId: this.userInfo?.uid || 'anonymous', // Pi User ID
+                    userId: this.userInfo?.uid || 'anonymous',
                     username: this.userInfo?.username || 'anonymous_pi_user',
                     timestamp: new Date().toISOString()
                 }
             };
-            
             console.log('Creating Pi payment:', paymentData);
-            
-            // Add timeout to payment creation
             const payment = await Promise.race([
                 window.Pi.createPayment(paymentData, {
                     onReadyForServerApproval: async (paymentId) => {
@@ -703,8 +215,8 @@ if (typeof module !== 'undefined' && module.exports) {
                                 },
                                 body: JSON.stringify({ 
                                     paymentId: paymentId,
-                                    amount: paymentData.amount, // Send amount for validation
-                                    productId: paymentData.metadata.productId // Send productId for validation
+                                    amount: paymentData.amount,
+                                    productId: paymentData.metadata.productId
                                 })
                             });
                             if (!approveResponse.ok) {
@@ -716,11 +228,8 @@ if (typeof module !== 'undefined' && module.exports) {
                         } catch (approvalError) {
                             console.error('Server approval error:', approvalError);
                             this.handlePaymentError(new Error(`Approval failed: ${approvalError.message}`));
-                            // Note: The Pi SDK doesn't have a direct way to cancel the payment from here if server approval fails.
-                            // The user would typically cancel in the Pi app.
                         }
                     },
-                    
                     onReadyForServerCompletion: async (paymentId, txid) => {
                         console.log('Payment ready for server completion:', paymentId, txid);
                         this.updateButtonText('Completing payment...');
@@ -734,7 +243,7 @@ if (typeof module !== 'undefined' && module.exports) {
                                 body: JSON.stringify({
                                     paymentId: paymentId,
                                     txid: txid,
-                                    userId: this.userInfo?.uid // Send Pi User ID
+                                    userId: this.userInfo?.uid
                                 })
                             });
                             if (!completeResponse.ok) {
@@ -748,10 +257,8 @@ if (typeof module !== 'undefined' && module.exports) {
                             this.handlePaymentError(new Error(`Completion failed: ${completionError.message}`));
                         }
                     },
-                    
                     onCancel: (paymentId) => {
                         console.log('Payment cancelled by user:', paymentId);
-                        // Notify server about cancellation
                         fetch('/api/pi-payments/cancel', {
                             method: 'POST',
                             headers: {
@@ -762,10 +269,8 @@ if (typeof module !== 'undefined' && module.exports) {
                         }).catch(err => console.error('Failed to notify server of cancellation:', err));
                         this.handlePaymentCancel();
                     },
-                    
                     onError: (error, payment) => {
                         console.error('Pi SDK Payment error occurred:', error, payment);
-                        // Notify server about the error
                         fetch('/api/pi-payments/error', {
                             method: 'POST',
                             headers: {
@@ -785,14 +290,10 @@ if (typeof module !== 'undefined' && module.exports) {
                     setTimeout(() => reject(new Error('Payment creation timeout')), 45000)
                 )
             ]);
-            
             console.log('Payment created successfully:', payment);
             return payment;
-            
         } catch (error) {
             console.error('Failed to create payment:', error);
-            
-            // Handle specific timeout errors
             if (error.message.includes('timeout')) {
                 this.handlePaymentError(new Error('Payment timed out. This may happen if you\'re not in Pi Browser or if there\'s a network issue.'));
             } else {
@@ -801,43 +302,31 @@ if (typeof module !== 'undefined' && module.exports) {
             throw error;
         }
     }
-    
-    async handlePaymentSuccess(payment) { // Added async
+
+    async handlePaymentSuccess(payment) {
         console.log('Payment completed successfully:', payment);
-        
-        // Store premium access
         localStorage.setItem('premiumAccess', 'true');
         localStorage.setItem('premiumActivatedAt', new Date().toISOString());
-        
-        // Update UI
         this.updateButtonText('✓ Premium Activated!');
         this.paymentButton.classList.remove('bg-purple-600', 'hover:bg-purple-700');
         this.paymentButton.classList.add('bg-green-600');
         this.paymentButton.disabled = true;
-        
-        // Show success message
         this.showNotification('Premium features unlocked! Enjoy advanced AI capabilities.', 'success');
-        
-        // Reset button after delay
         setTimeout(() => {
             this.updateButtonText('Premium Active');
         }, 3000);
-
-        // Refresh user data to show premium status
         await this.getUserData();
     }
-    
+
     handlePaymentCancel() {
         console.log('Payment was cancelled');
         this.showNotification('Payment cancelled. You can try again anytime.', 'info');
         this.resetButton();
     }
-    
+
     handlePaymentError(error) {
         console.error('Payment error:', error);
-        
         let errorMessage = 'Payment failed. Please try again.';
-        
         if (error.message) {
             if (error.message.includes('insufficient')) {
                 errorMessage = 'Insufficient Pi balance. Please check your wallet.';
@@ -845,61 +334,48 @@ if (typeof module !== 'undefined' && module.exports) {
                 errorMessage = 'Network error. Please check your connection and try again.';
             }
         }
-        
         this.showNotification(errorMessage, 'error');
         this.resetButton();
     }
-    
+
     createPaymentButton() {
         const placeholder = document.getElementById('pi-payment-button-placeholder');
-        const chatContainer = document.querySelector('.chat-container'); // Fallback container
+        const chatContainer = document.querySelector('.chat-container');
         const targetContainer = placeholder || chatContainer;
-
         if (!targetContainer) {
             console.error('Pi payment button container not found (expected #pi-payment-button-placeholder or .chat-container).');
             return;
         }
-        
-        // Check if premium is already active
         const hasPremium = localStorage.getItem('premiumAccess') === 'true';
-        
         this.paymentButton = document.createElement('button');
         this.paymentButton.className = `mt-4 w-full px-4 py-3 text-white rounded-lg font-medium transition-all duration-300 transform hover:scale-105 ${
             hasPremium ? 'bg-green-600' : 'bg-purple-600 hover:bg-purple-700'
         }`;
-        
         this.updateButtonText(hasPremium ? 'Premium Active' : '🚀 Unlock Premium Features (1π)');
         this.paymentButton.disabled = hasPremium;
-
         this.paymentButton.addEventListener('click', async () => {
             if (this.isProcessing || this.paymentButton.disabled) {
                 return;
             }
-            
             this.isProcessing = true;
             this.updateButtonText('Connecting...');
-            
             const maxProcessingTime = setTimeout(() => {
                 if (this.isProcessing) {
                     console.warn('Payment processing took too long, resetting...');
                     this.handlePaymentError(new Error('Payment took too long to process. Please try again.'));
                 }
-            }, 60000); // 60 seconds max
-            
+            }, 60000);
             try {
                 await this.createPayment();
             } catch (error) {
                 console.error('Payment process failed:', error);
-                // Error is already handled by createPayment's catch block and handlePaymentError
             } finally {
                 clearTimeout(maxProcessingTime);
                 this.isProcessing = false;
-                // Button state (text, disabled) is managed by handlePaymentSuccess, handlePaymentError, handlePaymentCancel
             }
         });
-        
         if (placeholder && targetContainer === placeholder) {
-            placeholder.innerHTML = ''; // Clear placeholder content
+            placeholder.innerHTML = '';
         }
         targetContainer.appendChild(this.paymentButton);
         console.log('Pi payment button created and added.');
@@ -907,15 +383,13 @@ if (typeof module !== 'undefined' && module.exports) {
 
     createFallbackButton() {
         const placeholder = document.getElementById('pi-payment-button-placeholder');
-        const chatContainer = document.querySelector('.chat-container'); // Fallback container
+        const chatContainer = document.querySelector('.chat-container');
         const targetContainer = placeholder || chatContainer;
-
         if (!targetContainer) {
             console.error('Pi fallback button container not found (expected #pi-payment-button-placeholder or .chat-container).');
             return;
         }
-        
-        this.paymentButton = document.createElement('div'); // Fallback is a div, not a button
+        this.paymentButton = document.createElement('div');
         this.paymentButton.className = 'mt-4 w-full p-4 bg-gray-700 text-white rounded-lg text-center';
         this.paymentButton.innerHTML = `
             <div class="mb-2">
@@ -934,28 +408,33 @@ if (typeof module !== 'undefined' && module.exports) {
                 Current browser: ${navigator.userAgent.includes('Pi') ? 'Pi Browser' : 'Regular Browser'}
             </div>
         `;
-        
         if (placeholder && targetContainer === placeholder) {
-            placeholder.innerHTML = ''; // Clear placeholder content
+            placeholder.innerHTML = '';
         }
         targetContainer.appendChild(this.paymentButton);
         console.log('Fallback payment info created.');
     }
-    
+
     updateButtonText(text) {
         if (this.paymentButton) {
             this.paymentButton.textContent = text;
         }
     }
-    
+
     resetButton() {
         this.isProcessing = false;
-        this.updateButtonText('🚀 Unlock Premium Features (1π)');
-        this.paymentButton.disabled = false;
+        // Only enable if user does not have premium
+        const hasPremium = localStorage.getItem('premiumAccess') === 'true';
+        if (!hasPremium) {
+            this.updateButtonText('🚀 Unlock Premium Features (1π)');
+            if (this.paymentButton) this.paymentButton.disabled = false;
+        } else {
+            this.updateButtonText('Premium Active');
+            if (this.paymentButton) this.paymentButton.disabled = true;
+        }
     }
-    
+
     showNotification(message, type = 'info') {
-        // Create notification element
         const notification = document.createElement('div');
         notification.className = `fixed top-4 right-4 p-4 rounded-lg text-white font-medium z-50 transform transition-all duration-300 ${
             type === 'success' ? 'bg-green-600' : 
@@ -963,16 +442,10 @@ if (typeof module !== 'undefined' && module.exports) {
             'bg-blue-600'
         }`;
         notification.textContent = message;
-        
-        // Add to page
         document.body.appendChild(notification);
-        
-        // Animate in
         setTimeout(() => {
             notification.style.transform = 'translateX(0)';
         }, 100);
-        
-        // Remove after delay
         setTimeout(() => {
             notification.style.transform = 'translateX(100%)';
             setTimeout(() => {
@@ -983,7 +456,6 @@ if (typeof module !== 'undefined' && module.exports) {
         }, 4000);
     }
 
-    // Added getUserData method
     async getUserData() {
       if (!this.token) {
         console.log('No token found, skipping getUserData.');
@@ -995,30 +467,24 @@ if (typeof module !== 'undefined' && module.exports) {
             'Authorization': `Bearer ${this.token}`
           }
         });
-        
         if (!response.ok) {
           const errorData = await response.json().catch(() => ({ message: 'Failed to fetch user data and parse error' }));
           throw new Error(errorData.message || 'Failed to fetch user data');
         }
-        
         const userData = await response.json();
         console.log('User data fetched:', userData);
-        
-        // Update UI elements (ensure these elements exist on the page where this script runs)
         const userNameEl = document.getElementById('user-name');
-        const userEmailEl = document.getElementById('user-email'); // Assuming an element with this ID might exist
+        const userEmailEl = document.getElementById('user-email');
         const premiumStatusEl = document.getElementById('premium-status');
         const remainingTrialsEl = document.getElementById('remaining-trials');
-        const upgradeContainerEl = document.getElementById('upgrade-container'); // e.g., a div holding the payment button
-
+        const upgradeContainerEl = document.getElementById('upgrade-container');
         if (userNameEl && userData.user && userData.user.name) userNameEl.textContent = userData.user.name;
-        if (userEmailEl && userData.user && userData.user.email) userEmailEl.textContent = userData.user.email; // Safely access email
-        
+        if (userEmailEl && userData.user && userData.user.email) userEmailEl.textContent = userData.user.email;
         if (premiumStatusEl) {
             if (userData.user && userData.user.isPremium) {
                 premiumStatusEl.textContent = 'Premium';
-                premiumStatusEl.className = 'status-premium'; // Use a consistent class naming
-                if (upgradeContainerEl) upgradeContainerEl.style.display = 'none'; // Hide upgrade if premium
+                premiumStatusEl.className = 'status-premium';
+                if (upgradeContainerEl) upgradeContainerEl.style.display = 'none';
                 if (this.paymentButton && this.paymentButton.parentElement === upgradeContainerEl) {
                     this.updateButtonText('✓ Premium Activated!');
                     this.paymentButton.classList.remove('bg-purple-600', 'hover:bg-purple-700');
@@ -1027,21 +493,18 @@ if (typeof module !== 'undefined' && module.exports) {
                 }
             } else {
                 premiumStatusEl.textContent = 'Basic';
-                premiumStatusEl.className = 'status-basic'; // Use a consistent class naming
+                premiumStatusEl.className = 'status-basic';
                 if (remainingTrialsEl && userData.user && userData.user.remainingTrials !== undefined) {
                     remainingTrialsEl.textContent = `${userData.user.remainingTrials} trials remaining`;
                 }
-                if (upgradeContainerEl) upgradeContainerEl.style.display = 'block'; // Show upgrade if not premium
+                if (upgradeContainerEl) upgradeContainerEl.style.display = 'block';
                  if (this.paymentButton && this.paymentButton.parentElement === upgradeContainerEl) {
-                    this.resetButton(); // Ensure button is in its default state if not premium
+                    this.resetButton();
                 }
             }
         }
-
-        // Update Pi-specific UI elements if Pi user info is available from authentication
-        const piUsernameEl = document.getElementById('pi-username'); // e.g., <span id="pi-username"></span>
-        const piAuthStatusEl = document.getElementById('pi-auth-status'); // e.g., <span id="pi-auth-status"></span>
-
+        const piUsernameEl = document.getElementById('pi-username');
+        const piAuthStatusEl = document.getElementById('pi-auth-status');
         if (this.userInfo && this.userInfo.username) {
             if (piUsernameEl) piUsernameEl.textContent = `Pi User: ${this.userInfo.username}`;
             if (piAuthStatusEl) {
@@ -1064,18 +527,14 @@ if (typeof module !== 'undefined' && module.exports) {
         }
         return null;
       }
-    } // End of getUserData method
-} // End of PiPaymentManager class
+    }
+}
 
 // Initialize the PiPaymentManager if on a page that needs it.
-// This should be outside the class definition.
 document.addEventListener('DOMContentLoaded', () => {
-    // Initialize if a chat container or a premium status display is present,
-    // or if a specific element indicating Pi payment functionality is on the page.
     if (document.querySelector('.chat-container') || 
         document.getElementById('premium-status') || 
-        document.getElementById('pi-payment-button-placeholder')) { // Added a placeholder ID for more explicit targeting
+        document.getElementById('pi-payment-button-placeholder')) {
         new PiPaymentManager();
     }
 });
->>>>>>> f0d38d87b7a8cbf4156ccd4c1cf1b8254d297799

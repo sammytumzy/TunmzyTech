@@ -1,11 +1,8 @@
 const express = require('express');
 const dotenv = require('dotenv');
 const path = require('path');
-<<<<<<< HEAD
 const { applySecurityMiddleware } = require('./middlewares/security');
-=======
 const mongoose = require('mongoose');
->>>>>>> f0d38d87b7a8cbf4156ccd4c1cf1b8254d297799
 
 // Load environment variables
 dotenv.config();
@@ -66,28 +63,19 @@ app.use(passport.initialize());
 app.use(passport.session());
 
 // Import routes
-<<<<<<< HEAD
 const piRoutes = require('./routes/pi');
-const servicesRoutes = require('./routes/services');
-=======
 const authRoutes = require('./routes/auth');
 const servicesRoutes = require('./routes/services');
 const piPaymentRoutes = require('./routes/pi-payment'); // Added Pi Payment Routes
->>>>>>> f0d38d87b7a8cbf4156ccd4c1cf1b8254d297799
 
 // Static file serving
 app.use('/assets', express.static(path.join(__dirname, 'assets')));
 
-<<<<<<< HEAD
-// Use routes
-app.use('/api/pi', piRoutes);
-app.use('/api/services', servicesRoutes);
-=======
 // Routes
+app.use('/api/pi', piRoutes);
 app.use('/auth', authRoutes);
 app.use('/api/services', servicesRoutes);
 app.use('/api/payments', piPaymentRoutes); // Fixed to match frontend calls
->>>>>>> f0d38d87b7a8cbf4156ccd4c1cf1b8254d297799
 
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'index.html'));
@@ -106,13 +94,10 @@ app.get('/chat.html', (req, res) => {
   res.sendFile(path.join(__dirname, 'chat.html'));
 });
 
-<<<<<<< HEAD
 app.get('/pi-test', (req, res) => {
   res.sendFile(path.join(__dirname, 'pi-test.html'));
 });
 
-// Error handling middleware
-=======
 app.get('/privacy.html', (req, res) => {
   res.sendFile(path.join(__dirname, 'privacy.html'));
 });
@@ -125,8 +110,7 @@ app.get('/callback.html', (req, res) => {
   res.sendFile(path.join(__dirname, 'callback.html'));
 });
 
-// Error handling
->>>>>>> f0d38d87b7a8cbf4156ccd4c1cf1b8254d297799
+// Error handling middleware
 app.use((err, req, res, next) => {
   console.error(err.stack);
   res.status(500).json({
@@ -149,30 +133,24 @@ mongoose.connect(process.env.MONGO_URI)
   .then(() => console.log('Connected to MongoDB'))
   .catch(err => console.error('MongoDB connection error:', err));
 
-<<<<<<< HEAD
-// Start server
-app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
-  console.log(`
+// Start server only if not imported by test
+if (require.main === module) {
+  const server = app.listen(PORT, () => {
+    console.log(`Server is running on port ${PORT}`);
+    console.log(`
 App URLs:
 - Main app: http://localhost:${PORT}
 - Pi Sandbox: https://sandbox.minepi.com/mobile-app-ui/app/tumzytech
   `);
-}).on('error', (err) => {
-  if (err.code === 'EADDRINUSE') {
-    console.error(`Port ${PORT} is already in use. Please kill existing processes or use a different port.`);
-    console.error('To kill Node processes on Windows: taskkill /F /IM node.exe');
-    process.exit(1);
-  } else {
+  }).on('error', (err) => {
+    if (err.code === 'EADDRINUSE') {
+      console.error(`Port ${PORT} is already in use. Please use a different port.`);
+      process.exit(1);
+    }
     console.error('Server error:', err);
     process.exit(1);
-  }
-=======
-// Start the server
-const server = app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
->>>>>>> f0d38d87b7a8cbf4156ccd4c1cf1b8254d297799
-});
+  });
+}
 
 // Set up localtunnel for HTTPS access
 if (process.env.NODE_ENV !== 'production') {
@@ -185,3 +163,5 @@ if (process.env.NODE_ENV !== 'production') {
       console.error('Error setting up localtunnel:', err);
     });
 }
+
+module.exports = app;

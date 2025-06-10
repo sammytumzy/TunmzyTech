@@ -3,6 +3,8 @@ const passport = require('passport');
 const jwt = require('jsonwebtoken');
 const axios = require('axios');
 const User = require('../models/User');
+const { validateRegistration } = require('../middlewares/validation');
+const authController = require('../controllers/authController');
 
 const router = express.Router();
 
@@ -100,6 +102,10 @@ router.post('/verify', async (req, res) => {
     });
   }
 });
+
+// Local authentication
+router.post('/register', validateRegistration, authController.register);
+router.post('/login', authController.login);
 
 // Logout
 router.get('/logout', (req, res) => {
