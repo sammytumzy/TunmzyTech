@@ -1218,5 +1218,17 @@
       </a>
     </div>
   </footer>
+  <script>
+    // Mouse-following effect for #tech-animation
+    const techAnim = document.getElementById('tech-animation');
+    if (techAnim) {
+      document.addEventListener('mousemove', (e) => {
+        const x = e.clientX / window.innerWidth;
+        const y = e.clientY / window.innerHeight;
+        techAnim.style.background = `radial-gradient(circle at ${x*100}% ${y*100}%, rgba(147,51,234,0.25) 0%, transparent 80%)`;
+        techAnim.style.transition = 'background 0.1s';
+      });
+    }
+  </script>
 </body>
 </html>
